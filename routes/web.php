@@ -23,6 +23,8 @@ use Illuminate\Support\Facades\Route;
 //     return view('welcome');
 // });
 
+// coba commit
+
 Route::prefix('auth')->middleware('guest')->group(function () {
     Route::get('login', [LoginController::class, 'index'])->name('login');
     Route::post('login', [LoginController::class, 'authenticate'])->name('loginprocess');
