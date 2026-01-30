@@ -23,6 +23,12 @@
         margin: 0;
         font-family: 'Times New Roman', serif;
       }
+      
+      .print-center {
+        text-align: center !important;
+        display: block !important;
+        width: 100% !important;
+    }
 
       .print-header {
         position: fixed;
@@ -96,7 +102,7 @@
         </div>
 
         <div class="text-center my-4" style="font-size: 22px;">
-          <strong>"{!! $datamagang['judul'] ?? '' !!}"</strong>
+            <strong>"{!! strip_tags($datamagang['judul'] ?? '-') !!}"</strong>
         </div>
 
         <p style="font-size: 20px;">
