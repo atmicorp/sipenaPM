@@ -173,7 +173,7 @@
                 <tr>
                   <td style="height: 100px; padding-right: 10px; border: none; font-size: 20px;">{{ $pnj->status->status_dosen ?? '-' }}</td>
                   <td style="height: 100px; padding-right: 10px; border: none; font-size: 20px;  width: 500px;">
-                     {{ $pnj->userdosen->name ?? '-' }}{{ isset($pnj->userdosen->details->gelar_belakang) ? ', '.$pnj->userdosen->details->gelar_belakang : '' }}<br>
+                     {{ $pnj->userdosen->details?->gelar_depan ?? '' }} {{ $pnj->userdosen->name ?? '-' }}{{ isset($pnj->userdosen->details->gelar_belakang) ? ', '.$pnj->userdosen->details->gelar_belakang : '' }}<br>
                       ({{ $pnj->userdosen->details->nidn ?? '-' }})
                   </td>
                   <td style="height: 100px; width: 190px; border: none; font-size: 20px;">{{ $loop->iteration }}.</td>

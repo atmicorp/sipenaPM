@@ -277,7 +277,11 @@
                         <!-- Bagian Jadwal Presentasi -->
                         <div class="row">
                           <div class="col-md-12">
-                          <form action="{{ route('judulta.update', ['id' => $pesertatamhs->id_kelompok_ta]) }}" method="POST" id="edittaForm">
+                           @if(isset($pesertatamhs))
+                            <form action="{{ route('judulta.update', ['id' => $pesertatamhs->id_kelompok_ta]) }}"
+                                      method="POST"
+                                      id="edittaForm">
+                            
                                         @csrf
                                         @method('PUT')
                                         <input type="hidden" class="form-control" id="id_kel_ta" name="id_kel_ta" value="{{ $pesertatamhs->id_kelompok_ta }}" readonly>
@@ -286,7 +290,9 @@
                                             {{ $pesertatamhs->kelompokTA->judul_ta }}
                                         </textarea>
                                         <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
-                                    </form> 
+                                    </form> @else
+<p>Data peserta tidak ditemukan, silakan login atau pilih peserta lain.</p>
+@endif
                           </div>                  
                         </div>
 
