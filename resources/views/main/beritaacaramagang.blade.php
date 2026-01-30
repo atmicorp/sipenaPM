@@ -96,7 +96,7 @@
         </div>
 
         <div class="text-center my-4" style="font-size: 22px;">
-          <strong>"{{ strip_tags($datamagang['judul'] ?? '-') }}"</strong>
+          <strong>"{!! $datamagang['judul'] ?? '' !!}"</strong>
         </div>
 
         <p style="font-size: 20px;">
