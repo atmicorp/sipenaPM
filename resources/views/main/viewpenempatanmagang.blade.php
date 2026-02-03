@@ -107,6 +107,10 @@
                                         <label for="jam_presentasi">Lokasi Presentasi</label>
                                         <input type="text" class="form-control" id="lokasi" name="lokasi" value="{{ $peserta->lokasi }}" placeholder="Lokasi Presentasi" >
                                     </div>
+                                     <div class="form-group">
+                                        <label for="sk">SK</label>
+                                        <input type="text" class="form-control" id="sk" name="sk" value="{{ $peserta->sk }}" placeholder="Nomor SK" >
+                                    </div>
                                 </form>
                             </div>
                             <div class="modal-footer">
@@ -161,6 +165,7 @@
                                        <input type="hidden" name="nim" value="{{ $peserta->usermahasiswa->details->nim}}">
                                        <input type="hidden" name="lokasi" value="{{ $peserta->lokasi}}">
                                        <input type="hidden" name="tanggal" value="{{ $peserta->tanggal_presentasi}}">
+                                       <input type="hidden" name="sk" value="{{ $peserta->sk}}">
                                        <input type="hidden" name="in" value="{{ $peserta->jam_presentasi}}">
                                        <input type="hidden" name="out" value="{{ $peserta->jam_presentasi_selesai}}">
                                        <input type="hidden" name="judul" value="{{ $peserta->judul_laporan}}">
