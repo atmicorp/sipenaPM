@@ -96,7 +96,7 @@
             pukul <strong>{{ $datamagang['in'] ?? '-' }} - {{ $datamagang['out'] ?? '-' }}</strong> 
             bertempat di <strong>{{ $datamagang['lokasi'] ?? '-' }}</strong>, 
             dilaksanakan <strong>Presentasi Sidang Magang Program Studi Sarjana Terapan Perancangan Manufaktur</strong> 
-            terhadap mahasiswa tingkat 4 tahun perkuliahan <strong>{{ $datamagang['tahun'] ?? '-' }}</strong> 
+            terhadap mahasiswa tingkat 4 tahun perkuliahan <strong>{{ $datamagang['tahun'] ?? (now()->year - 1).'/'.now()->year }}</strong> 
             dengan SK Pembimbing Magang nomor <strong>{{ $datamagang['sk'] ?? '-' }}</strong> dengan judul:
           </p>
         </div>
@@ -106,7 +106,7 @@
         </div>
 
         <p style="font-size: 20px;">
-          Berdasarkan hasil presentasi magang Program Studi Sarjana Terapan Perancangan Manufaktur terhadap mahasiswa tingkat 4 tahun perkuliahan {{ $datamagang['tahun'] ?? '-' }}, menyatakan bahwa laporan hasil magang dengan judul tersebut:
+          Berdasarkan hasil presentasi magang Program Studi Sarjana Terapan Perancangan Manufaktur terhadap mahasiswa tingkat 4 tahun perkuliahan {{ $datamagang['tahun'] ?? (now()->year - 1).'/'.now()->year }}, menyatakan bahwa laporan hasil magang dengan judul tersebut:
         </p>
 
         <!-- Checklist -->
