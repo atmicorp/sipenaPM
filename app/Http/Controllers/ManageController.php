@@ -945,6 +945,7 @@ class ManageController extends Controller
             $peserta->jam_presentasi = $request->jam_presentasi;
             $peserta->jam_presentasi_selesai = $request->jam_presentasi_selesai;
             $peserta->lokasi = $request->lokasi;
+             $peserta->sk = $request->sk;
             $peserta->save();
     
             return redirect()->back()->with('success', 'Data Berhasil Diubah');
