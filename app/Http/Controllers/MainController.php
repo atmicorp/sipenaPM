@@ -494,9 +494,14 @@ class MainController extends Controller
     { 
         try {
              // Validasi file
-        $request->validate([
-            'file' => 'required|mimes:pdf|max:2048', // Maksimum 2MB
-        ]);
+       $request->validate(
+            [
+                'file' => 'required|mimes:pdf|max:2048',
+            ],
+            [
+                'file.max' => 'Dokumen gagal diupload. Ukuran file maksimal 2MB.',
+            ]
+        );
 
         $nim = Auth::user()->details->nim;
         // Proses upload file

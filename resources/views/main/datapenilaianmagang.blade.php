@@ -202,49 +202,74 @@
  
 
 <script>
-      $(function () {
-          // Inisialisasi DataTables untuk tabel pada tab "Approve"
-          $("#example1").DataTable({
-              "responsive": true,
-              "lengthChange": false,
-              "autoWidth": false,
-              "buttons": [
-                  {
-                      extend: 'excel',
-                      title: "Nilai Magang",
-                  },
-                  {
-                      extend: 'pdf',
-                      title: "Nilai Magang",
-                  },
-              ]
-          }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
-  
-          // Perbarui responsivitas tabel saat tab berubah, <a> yang memiliki atribut data-toggle dengan nilai "tab"
-          $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-              $.fn.dataTable.tables({visible: true, api: true}).columns.adjust().responsive.recalc();
-          });
-  
-          // Inisialisasi DataTables untuk tabel pada tab "Not Approve"
-          $("#example2").DataTable({
-              "responsive": true,
-              "lengthChange": false,
-              "autoWidth": false,
-              "buttons": [
-                  {
-                      extend: 'excel',
-                      
-                      title: "Nilai Rata-rata Magang",
-                  },
-                  {
-                      extend: 'pdf',
-                      
-                      title: "Nilai Rata-rata Magang",
-                  },
-              ]
-          }).buttons().container().appendTo('#example2_wrapper .col-md-6:eq(0)');
-      });
-  </script>
+$(function () {
+
+    function excelFixFormat() {
+        return {
+            extend: 'excelHtml5',
+            title: "Nilai Rata-rata Magang",
+            exportOptions: {
+                format: {
+                    body: function (data) {
+                        data = data.replace(/<[^>]*>/g, '').trim();
+                        data = data.replace(/\./g, '').replace(',', '.');
+
+                        if (!isNaN(data) && data !== '') {
+                            return parseFloat(data);
+                        }
+                        return data;
+                    }
+                }
+            }
+        };
+    }
+
+    const table1 = $("#example1").DataTable({
+        responsive: true,
+        lengthChange: false,
+        autoWidth: false,
+        buttons: [
+            {
+                extend: 'excelHtml5',
+                title: "Nilai Magang",
+                exportOptions: excelFixFormat().exportOptions
+            },
+            {
+                extend: 'pdfHtml5',
+                title: "Nilai Magang",
+            },
+        ]
+    });
+
+    table1.buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
+
+
+    const table2 = $("#example2").DataTable({
+        responsive: true,
+        lengthChange: false,
+        autoWidth: false,
+        buttons: [
+            excelFixFormat(),
+            {
+                extend: 'pdfHtml5',
+                title: "Nilai Rata-rata Magang",
+            },
+        ]
+    });
+
+    table2.buttons().container().appendTo('#example2_wrapper .col-md-6:eq(0)');
+
+
+    // 🔑 INI KUNCI SUPAYA TAB KE-2 RESPONSIVE
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function () {
+        table1.columns.adjust().responsive.recalc();
+        table2.columns.adjust().responsive.recalc();
+    });
+
+});
+</script>
+
+
 
   
 @endsection
