@@ -60,10 +60,25 @@ class ManageController extends Controller
                 abort(403, 'Profil Tidak Ditemukan');
             }
             $statusdosen = StatusDosen::where('status_dosen', '!=', 'Penguji')->get();
-            $mahasiswa = PesertaTA::with('usermahasiswaTA')
-                ->whereNull('id_kelompok_ta') // Mencari yang NULL
-                ->orWhere('id_kelompok_ta', '') // Mencari yang kosong ('')
+            $mahasiswa = User::role('Mahasiswa')
+                ->where(function ($query) {
+
+                    // 1️⃣ Tidak ada di tabel pesertaTA
+                    $query->whereDoesntHave('pesertaTA')
+
+                        // ATAU
+
+                        ->orWhereHas('pesertaTA', function ($q) {
+                            $q->whereNull('id_kelompok_ta')
+                                ->orWhere('id_kelompok_ta', '');
+                        });
+
+                })
                 ->get();
+
+            // dd($mahasiswa);
+
+            // dd($mahasiswa);
             $dosen = User::role('Dosen')->get();
             $pesertaTA = PesertaTA::with('usermahasiswaTA')->where('id_kelompok_ta', $id)->get();
             $pengujiTA = DataPengujiTa::with('userdosenTA','statusdosenTA')->where('id_kelompok_ta', $id)->get();
@@ -219,13 +234,11 @@ class ManageController extends Controller
             if (!$user) {
                 abort(403, 'Profil Tidak Ditemukan');
             }
-            $jadwalta =JadwalTA::with(['kelompokTA', 'kategoriTA'])->get();
             
-            $pesertata = PesertaTA::with(['usermahasiswaTA', 'kelompokTA'])->get();
+            $kelompokTA = KelompokTA::get();
+        
 
-            // dd($pesertata);
-
-            return view("main.viewmanageta", compact('pesertata'));
+            return view("main.viewmanageta", compact('kelompokTA'));
         }
         catch (\Exception $e) {
             return redirect()->back()->with('error', 'Data tidak ditemukan');
@@ -349,6 +362,7 @@ class ManageController extends Controller
 
     public function pesertataupdate(Request $request, $id)
     {
+        // dd($request);
         try {
             // Validasi input (tanpa error jika null)
             $validatedData = $request->validate([
@@ -381,8 +395,16 @@ class ManageController extends Controller
                 }
 
                 // Update id_kelompok_ta untuk mahasiswa yang ada
-                PesertaTA::whereIn('id_mahasiswa', $mahasiswa)
-                    ->update(['id_kelompok_ta' => $id]);
+                foreach ($mahasiswa as $mhsId) {
+                    PesertaTA::updateOrCreate(
+                        [
+                            'id_mahasiswa' => $mhsId
+                        ],
+                        [
+                            'id_kelompok_ta' => $id
+                        ]
+                    );
+                }
             }
 
             // Hanya proses dosen jika ada data

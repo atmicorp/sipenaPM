@@ -23,7 +23,7 @@ class CustomSeeder extends Seeder
         $this->call([
             KelompokTASeeder::class,
             // KategoriTASeeder::class,
-            PesertaTASeeder::class,
+            // PesertaTASeeder::class,
             JadwalTASeeder::class,
             // AspekPenilaianTASeeder::class,
             VerifikasiKelompokTAseeder::class,

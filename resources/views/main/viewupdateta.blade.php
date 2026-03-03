@@ -56,7 +56,7 @@
                         <!-- Judul -->
                         <div>
                         <label class="fw-bold">Judul:</label>
-                        <div class="border p-2">{!! $kelompokTA->judul_ta !!}</div>
+                        <div class="border p-2">{!! $kelompokTA->judul_ta ?? 'Belum ada judul' !!}</div>
                         </div>
                     </div>
                 </div>         
@@ -121,8 +121,8 @@
                                                 <select name="mahasiswa[]" class="form-control" >
                                                     <option value="" disabled selected>Mahasiswa</option>
                                                     @foreach ($mahasiswa as $mhs)
-                                                    <option value="{{ $mhs->usermahasiswaTA->id }}">
-                                                   ({{ $mhs->usermahasiswaTA->details->nim }}) {{ $mhs->usermahasiswaTA->name }}
+                                                    <option value="{{ $mhs->id }}">
+                                                   ({{ $mhs->details->nim }}) {{ $mhs->name }}
                                                     </option>
                                                     @endforeach
                                                 </select>
@@ -317,8 +317,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 <select name="mahasiswa[]" class="form-control">
                     <option value="" disabled selected>Mahasiswa</option>
                       @foreach ($mahasiswa as $mhs)
-                        <option value="{{ $mhs->usermahasiswaTA->id }}">
-                        ({{ $mhs->usermahasiswaTA->details->nim }}) {{ $mhs->usermahasiswaTA->name }}
+                        <option value="{{ $mhs->id }}">
+                        ({{ $mhs->details->nim }}) {{ $mhs->name }}
                      </option>
                      @endforeach
                   </select>

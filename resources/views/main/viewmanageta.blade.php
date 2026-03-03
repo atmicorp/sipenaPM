@@ -59,35 +59,33 @@
                             <th>No</th>                
                             <th>Kelompok TA</th>
                             <th>Judul TA</th>
-                            <th>Nama Peserta</th>
-                            <th>NIM</th>
+                            
                             <th>SK</th>
                             <th>Periode</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($pesertata as $kta)
+                        @foreach($kelompokTA as $kta)
                         <tr>
                             <td>{{$loop->iteration}}</td>
-                            <td>{{ $kta->kelompokTA?->nama_kelompok ?? 'Belum ada kelompok' }}</td>
-                            <td>{!! $kta->kelompokTA?->judul_ta ?? '-' !!}</td>
-                            <td>{{ $kta->usermahasiswaTA->name }}</td>
-                            <td>{{ $kta->usermahasiswaTA->details->nim }}</td>
-                            <td>{{ $kta->kelompokTA?->sk ?? '-' }}</td>
-                            <td>{{ $kta->kelompokTA?->tahun_perkuliahan ?? '-' }}</td>
+                            <td>{{ $kta->nama_kelompok ?? 'Belum ada kelompok' }}</td>
+                            <td>{!! $kta->judul_ta ?? '-' !!}</td>
+                            
+                            <td>{{ $kta->sk ?? '-' }}</td>
+                            <td>{{ $kta->tahun_perkuliahan ?? '-' }}</td>
                             <td>
                               <!-- Tombol Edit TA -->
-                                @if($kta->kelompokTA)
+                                @if($kta)
                                     <button class="btn btn-sm btn-primary btn-edit-ta p-1 px-2 mt-2 mb-2" 
-                                            data-toggle="modal" data-target="#editta{{ $kta->kelompokTA->id }}">
+                                            data-toggle="modal" data-target="#editta{{ $kta->id }}">
                                         <i class="fas fa-file-alt"></i> Edit TA
                                     </button>
                                 @endif
 
                                 <!-- Tombol Edit Peserta -->
-                                @if($kta->kelompokTA)
-                                    <a href="{{ route('vpesertata.update', $kta->kelompokTA->id) }}" 
+                                @if($kta)
+                                    <a href="{{ route('vpesertata.update', $kta->id) }}" 
                                       class="btn btn-sm btn-success p-1 px-2 mt-2 mb-2">
                                         <i class="fas fa-user-graduate"></i> Edit Peserta
                                     </a>
@@ -98,8 +96,8 @@
                         </tr>
 
                         <!-- modal ta -->
-                         @if($kta->kelompokTA)
-                        <div class="modal fade" id="editta{{ $kta->kelompokTA->id }}" tabindex="-1" role="dialog" aria-labelledby="edittaLabel" aria-hidden="true">
+                         @if($kta)
+                        <div class="modal fade" id="editta{{ $kta->id }}" tabindex="-1" role="dialog" aria-labelledby="edittaLabel" aria-hidden="true">
                             <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
                                 <div class="modal-content">
                                     <div class="modal-header">
@@ -114,21 +112,21 @@
                                     <div class="row mb-3">
                                     <div class="col-md-12">
                                         <label for="namakel_ta-peserta" class="form-label">Nama Kelompok TA</label>
-                                        <input type="text" class="form-control" value="{{ $kta->kelompokTA->nama_kelompok }}" ="namakel_ta-peserta" readonly>
+                                        <input type="text" class="form-control" value="{{ $kta->nama_kelompok }}" ="namakel_ta-peserta" readonly>
                                     </div>
                                     
                                     </div>
                                 </div>
-                                <form action="{{ route('kta.update', ['id' => $kta->kelompokTA->id]) }}" method="POST" id="edittaForm">
+                                <form action="{{ route('kta.update', ['id' => $kta->id]) }}" method="POST" id="edittaForm">
                                         @csrf
                                         @method('PUT')
-                                        <input type="hidden" class="form-control" id="id_kel_ta" name="id_kel_ta" value="{{ $kta->kelompokTA->id }}" readonly>
+                                        <input type="hidden" class="form-control" id="id_kel_ta" name="id_kel_ta" value="{{ $kta->id }}" readonly>
                                         <label for="namakel_ta-peserta" class="form-label">SK</label>
-                                        <input type="text" class="form-control" id="sk" name="sk" value="{{ $kta->kelompokTA->sk }}" required>
+                                        <input type="text" class="form-control" id="sk" name="sk" value="{{ $kta->sk }}" required>
                                         <label for="namakel_ta-peserta " class="form-label mt-3">Judul TA</label>
-                                        <textarea name="judulta" id="compose-textarea-{{ $kta->kelompokTA->id }}" 
+                                        <textarea name="judulta" id="compose-textarea-{{ $kta->id }}" 
                                             class="form-control compose-textarea" style="height: 300px">
-                                            {{ $kta->kelompokTA->judul_ta }}
+                                            {{ $kta->judul_ta }}
                                         </textarea>
                                         <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
                                     </form>

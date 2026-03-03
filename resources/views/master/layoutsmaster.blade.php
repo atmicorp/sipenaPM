@@ -296,7 +296,7 @@
             <a href="{{route('manageTA')}}" class="nav-link {{ request()->routeIs('manageTA') ? 'active' : '' }}">
               <i class="nav-icon fas fa-tasks"></i>
               <p>
-                Data Tugas Akhir
+                Konfigurasi TA
               </p>
             </a>
           </li>
