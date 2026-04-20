@@ -206,7 +206,7 @@
                 <li class="nav-item {{ request()->routeIs('penilaianTA', 'hasilpenilaianTAuntukdosen') && request()->route('id') == 2 ? 'menu-open' : '' }}">
                     <a href="#" class="nav-link {{ request()->routeIs('penilaianTA', 'hasilpenilaianTAuntukdosen') && request()->route('id') == 2 ? 'active' : '' }}">
                         <i class="nav-icon fas fa-chart-bar"></i>
-                        <p>Sidang Seminar Hasil</p>
+                        <p>Sidang Seminar Proges</p>
                         <i class="fas fa-angle-left right"></i>
                     </a>
                     <ul class="nav nav-treeview">
@@ -346,7 +346,7 @@
         <li class="nav-item {{ request()->routeIs('setupjadwalta', 'aspekpenilaianta', 'hasilpenilaianta') && request()->route('id') == 2 ? 'menu-open' : '' }}">
             <a href="#" class="nav-link {{ request()->routeIs('setupjadwalta', 'aspekpenilaianta', 'hasilpenilaianta') && request()->route('id') == 2 ? 'active' : '' }}">
                 <i class="nav-icon fas fa-chart-bar"></i>
-                <p>Sidang Seminar Hasil</p>
+                <p>Sidang Seminar Progres</p>
                 <i class="fas fa-angle-left right"></i>
             </a>
             <ul class="nav nav-treeview">
@@ -465,7 +465,7 @@
                 <li class="nav-item {{ request()->routeIs('formTAmhs') && request()->route('id') == 2 ? 'menu-open' : '' }}">
                     <a href="{{ route('formTAmhs', ['id' => 2]) }}" class="nav-link {{ request()->routeIs('formTAmhs') && request()->route('id') == 2 ? 'active' : '' }}">
                         <i class="nav-icon fas fa-chart-bar"></i>
-                        <p>Sidang Seminar Hasil</p>      
+                        <p>Sidang Seminar Progres</p>      
                     </a>
                 </li>
 
@@ -500,7 +500,7 @@
                   <a href="{{ route('view_dokumen_ta', ['id' => 2]) }}" class="nav-link {{ request()->routeIs('view_dokumen_ta') ? 'active' : '' }}" target="_blank">
                     <i class="nav-icon fas fa-file-pdf"></i>
                     <p>
-                      Sidang Seminar Hasil
+                      Sidang Seminar Progres
                     </p>
                   </a>
                 </li>
