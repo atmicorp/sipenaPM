@@ -370,9 +370,28 @@ class MainController extends Controller
         $datadifaldata = array_column($finalData, 'id_penguji');
         $datapenguji = DataPengujiTa::where('id_kelompok_ta', $id_kelompok_ta->id_kelompok_ta)->pluck('id')->toArray();
         // dd($datapenguji);
+
+
+        $diff1 = array_diff($datadifaldata, $datapenguji);
+        $diff2 = array_diff($datapenguji, $datadifaldata);
+
+        $namaDosen = DataPengujiTa::with('userdosenTA')
+            ->where('id_kelompok_ta', $id_kelompok_ta->id_kelompok_ta)
+            ->whereIn('id', $diff2)
+            ->get()
+            ->pluck('userdosenTA.name')
+            ->toArray();
+
+            // dd($namaDosen);
+        
+
+        // dd($datadifaldata, $datapenguji, $diff1, $diff2);
         if (!empty(array_diff($datadifaldata, $datapenguji)) || !empty(array_diff($datapenguji, $datadifaldata))) {
             // Jika ada perbedaan (data tidak cocok)
-            return redirect()->back()->with('error', 'Form Revisi Belum Tersedia');
+            return redirect()->back()->with(
+                'error',
+                'Form Revisi Belum Tersedia, Silahkan Hubungi dosen terkait untuk menilai : ' . implode(', ', $namaDosen)
+            );
         }
         // dd($datadifaldata, $datapenguji);
 
