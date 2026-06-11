@@ -4,6 +4,8 @@
  <link rel="stylesheet" href="{{asset('dtable/datatables-bs4/css/dataTables.bootstrap4.min.css')}}">
  <link rel="stylesheet" href="{{asset('dtable/datatables-responsive/css/responsive.bootstrap4.min.css')}}">
  <link rel="stylesheet" href="{{asset('dtable/datatables-buttons/css/buttons.bootstrap4.min.css')}}">
+
+ 
 @endsection
 
 @section('content')
@@ -176,7 +178,17 @@
         });
     @endforeach
 });
+
+
+  // Prevent scroll from changing number input values
+  document.addEventListener('wheel', function(e) {
+      if (document.activeElement.type === 'number') {
+          document.activeElement.blur();
+      }
+  }, true);
 </script>
+
+
 
 
 

@@ -628,4 +628,14 @@ $(document).ready(function () {
     @endforeach
 });
 </script>
+
+<script>
+document.addEventListener('wheel', function(e) {
+    if (document.activeElement.type === 'number') {
+        document.activeElement.blur();
+    }
+}, true);
+</script>
+
+@endsection
 @endsection
