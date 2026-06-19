@@ -83,7 +83,7 @@
 
 <div class="text-center">
   <h3><strong>BUKTI REVISI TUGAS AKHIR PEMBIMBING DAN PENGUJI</strong></h3>
-  <h3><strong>TAHUN AJARAN 2024/2025</strong></h3>
+  <h3><strong>TAHUN AJARAN {{$kelompok->tahun_perkuliahan}}</strong></h3>
 </div>
 
 <p><strong>Nama :</strong></p>

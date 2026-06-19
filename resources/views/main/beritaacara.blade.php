@@ -114,7 +114,7 @@
         <div class="row mt-5">
           <div class="col-12">
             <p style="font-size: 20px;">
-              Pada hari <strong>{{ \Carbon\Carbon::parse($jadwalta->tanggal_presentasi)->translatedFormat('l, d F Y') ?? '-' }}</strong>, Pukul <strong>{{$jadwalta->jam_presentasi}} - {{$jadwalta->jam_presentasi_selesai}}</strong> bertempat di <strong>{{$jadwalta->lokasi}}</strong>, dilaksanakan <strong>Presentasi {{$kategori->nama_kategori}}</strong> terhadap mahasiswa <strong>Program Studi Perancangan Manufaktur</strong> tahun perkuliahan <strong>{{$kelompok->tahun_perkuliahan}}</strong> dengan SK Pembimbing Magang nomor <strong>{{$kelompok->sk}}</strong> dengan judul:
+              Pada hari <strong>{{ \Carbon\Carbon::parse($jadwalta->tanggal_presentasi)->translatedFormat('l, d F Y') ?? '-' }}</strong>, Pukul <strong>{{$jadwalta->jam_presentasi}} - {{$jadwalta->jam_presentasi_selesai}}</strong> bertempat di <strong>{{$jadwalta->lokasi}}</strong>, dilaksanakan <strong>Presentasi {{$kategori->nama_kategori}}</strong> terhadap mahasiswa <strong>Program Studi Perancangan Manufaktur</strong> tahun perkuliahan <strong>{{$kelompok->tahun_perkuliahan}}</strong> dengan SK Pembimbing Tugas Akhir nomor <strong>{{$kelompok->sk}}</strong> dengan judul:
             </p>
           </div>
         </div>
