@@ -47,6 +47,9 @@
       <!-- SELECT2 EXAMPLE -->
       <div class="card card-default">
         <div class="card-header">
+          <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalTambahUser">
+            <i class="fas fa-plus"></i> Tambah User
+          </button>
           <div class="card-tools">
             <button type="button" class="btn btn-tool" data-card-widget="collapse">
               <i class="fas fa-minus"></i>
@@ -68,7 +71,77 @@
             </div>
             <button type="submit" class="btn btn-primary">Upload</button>
           </form>
-          
+          <div class="modal fade" id="modalTambahUser" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <form action="{{ route('storeusermanual') }}" method="POST">
+                  @csrf
+                  <div class="modal-header">
+                    <h5 class="modal-title">Tambah User Manual</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                  </div>
+
+                  <div class="modal-body">
+                    <div class="form-group">
+                      <label>Role <span class="text-danger">*</span></label>
+                      <select name="role" id="selectRole" class="form-control" required>
+                        <option value="">-- Pilih Role --</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Dosen">Dosen</option>
+                        <option value="Mahasiswa">Mahasiswa</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Nama Lengkap <span class="text-danger">*</span></label>
+                      <input type="text" name="name" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Email <span class="text-danger">*</span></label>
+                      <input type="email" name="email" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Password <span class="text-danger">*</span></label>
+                      <input type="password" name="password" class="form-control" required>
+                    </div>
+
+                    <div id="fieldDosen" style="display:none;">
+                      <div class="form-group">
+                        <label>NIK <span class="text-danger">*</span></label>
+                        <input type="text" name="nik" class="form-control">
+                      </div>
+                      <div class="form-group">
+                        <label>NIDN</label>
+                        <input type="text" name="nidn" class="form-control">
+                      </div>
+                      <div class="form-group">
+                        <label>Gelar Depan</label>
+                        <input type="text" name="gelar_depan" class="form-control">
+                      </div>
+                      <div class="form-group">
+                        <label>Gelar Belakang</label>
+                        <input type="text" name="gelar_belakang" class="form-control">
+                      </div>
+                    </div>
+
+                    <div id="fieldMahasiswa" style="display:none;">
+                      <div class="form-group">
+                        <label>NIM <span class="text-danger">*</span></label>
+                        <input type="text" name="nim" class="form-control">
+                      </div>
+                    </div>
+                  </div>
+                 
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
           <hr>
 
           <!-- Tabel Data User -->
@@ -139,6 +212,28 @@
 <script src="{{asset('dtable/datatables-buttons/js/buttons.html5.min.js')}}"></script>
 <script src="{{asset('dtable/datatables-buttons/js/buttons.print.min.js')}}"></script>
 <script src="{{asset('dtable/datatables-buttons/js/buttons.colVis.min.js')}}"></script>
+
+
+<script>
+$(document).ready(function () {
+    $('#selectRole').on('change', function () {
+        $('#fieldDosen, #fieldMahasiswa').hide();
+        $('#fieldDosen input, #fieldMahasiswa input').val(''); // reset value saat ganti role
+
+        if ($(this).val() === 'Dosen') {
+            $('#fieldDosen').show();
+        } else if ($(this).val() === 'Mahasiswa') {
+            $('#fieldMahasiswa').show();
+        }
+    });
+
+    // reset form & pilihan role saat modal ditutup
+    $('#modalTambahUser').on('hidden.bs.modal', function () {
+        $(this).find('form')[0].reset();
+        $('#fieldDosen, #fieldMahasiswa').hide();
+    });
+});
+</script>
 
 <script>
     $(function () {

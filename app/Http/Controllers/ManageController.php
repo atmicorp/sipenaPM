@@ -93,6 +93,58 @@ class ManageController extends Controller
 
     }
 
+    public function storeusermanual(Request $request)
+    {
+        try {
+            $validatedData = $request->validate([
+                'role' => 'required|in:Admin,Dosen,Mahasiswa',
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email',
+                'password' => 'required|string|min:8',
+                'nik' => 'required_if:role,Dosen|nullable|string|max:20',
+                'nidn' => 'nullable|string|max:20',
+                'gelar_depan' => 'nullable|string|max:20',
+                'gelar_belakang' => 'nullable|string|max:20',
+                'nim' => 'required_if:role,Mahasiswa|nullable|string|max:20',
+            ]);
+
+            DB::beginTransaction();
+
+            $user = User::create([
+                'name' => $validatedData['name'],
+                'email' => $validatedData['email'],
+                'password' => Hash::make($validatedData['password']),
+            ]);
+
+            $user->assignRole($validatedData['role']);
+
+            // Admin tidak punya baris di user_details
+            if ($validatedData['role'] === 'Dosen') {
+                UserDetail::create([
+                    'user_id' => $user->id,
+                    'nik' => $validatedData['nik'],
+                    'nidn' => $validatedData['nidn'] ?? null,
+                    'gelar_depan' => $validatedData['gelar_depan'] ?? null,
+                    'gelar_belakang' => $validatedData['gelar_belakang'] ?? null,
+                    'jabatan' => 'Dosen/Instruktur',
+                ]);
+            } elseif ($validatedData['role'] === 'Mahasiswa') {
+                UserDetail::create([
+                    'user_id' => $user->id,
+                    'nim' => $validatedData['nim'],
+                    'jabatan' => 'Mahasiswa',
+                ]);
+            }
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'User berhasil ditambahkan.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Gagal menambahkan user: ' . $e->getMessage());
+        }
+    }
+
     public function aspekpenilaianindividu()
     {
         try {
@@ -817,18 +869,15 @@ class ManageController extends Controller
    
     public function deleteaspekta($id)
     {
-        $penilaian = PenilaianTA::first();  
-            // Jika data penilaian magang ada, arahkan kembali dengan pesan error
-            if ($penilaian) {
-            return redirect()->back()->with('error', 'Anda tidak bisa menghapus data, karena sudah dilakukan penilaian');
-            }
-        // Mencari data berdasarkan ID
         $item = AspekPenilaianTA::findOrFail($id);
 
-        // Menghapus data
+        $penilaian = PenilaianTA::where('id_kategori_TA', $item->id_kategori_ta)->first();
+        if ($penilaian) {
+            return redirect()->back()->with('error', 'Anda tidak bisa menghapus data, karena sudah dilakukan penilaian');
+        }
+
         $item->delete();
 
-        // Mengembalikan respons dengan pesan sukses
         return redirect()->back()->with('success', 'Data berhasil dihapus');
     }
 

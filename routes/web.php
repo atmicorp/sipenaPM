@@ -127,7 +127,7 @@ Route::prefix('manage')->middleware(['auth', 'role:Admin'])->group(function () {
 
     Route::get('aspekpenilaian-individu', [ManageController::class, 'aspekpenilaianindividu'])->name('aspekpenilaianindividu'); //penamaan route 
     Route::post('tambah-aspek-penilaian-individu', [ManageController::class, 'storeaspekdatataindividu'])->name('storeaspekdatataindividu'); //penamaan route   
-    Route::delete('delete-aspek-individu/{id}', [MainController::class, 'deleteaspektaindividu'])->name('deleteaspektaindividu');
+    Route::delete('delete-aspek-individu/{id}', [ManageController::class, 'deleteaspektaindividu'])->name('deleteaspektaindividu');
 
     Route::get('hasil-penilaian-ta/{id}', [AssessmentController::class, 'hasilpenilaianta'])->name('hasilpenilaianta'); //penamaan route  
 
@@ -140,6 +140,9 @@ Route::prefix('manage')->middleware(['auth', 'role:Admin'])->group(function () {
     Route::post('update-user/{id}', [ManageController::class, 'updateuser'])->name('update.user');
     Route::post(' uploadphotoeditadmin/{id}', [ManageController::class, 'uploadphotoeditadmin'])->name('uploadphotoeditadmin'); //penamaan route
     Route::post('/import', [UserImportController::class, 'import'])->name('users.import');
+
+    Route::post('tambah-user-manual', [ManageController::class, 'storeusermanual'])->name('storeusermanual');
+    
     //reset data
     Route::post('reset-database', [ManageController::class, 'resetDatabase'])->name('reset.database');
     Route::get('reset-data', [ManageController::class, 'viewresetdatabase'])->name('reset.view');
