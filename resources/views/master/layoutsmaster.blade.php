@@ -247,6 +247,9 @@
                         </li>
                     </ul>
                 </li>
+          @endhasanyrole
+
+          @role('Admin')
 
           
           <li class="nav-header"><strong>MANAGE DATA MAGANG</strong></li>
@@ -444,7 +447,7 @@
                   <p>Reset Data</p>
               </a>
           </li>
-          @endhasanyrole
+          @endrole
 
           @role('Mahasiswa')
          

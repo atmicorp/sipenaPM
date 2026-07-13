@@ -49,10 +49,8 @@
                             <p class="text-center"><strong>{{ $kategoriTA->nama_kategori }}</strong></p>
                                 <div class="form-group mt-3">
                                 @if (
-                                  Auth::check() &&isset($datapenguji->userdosenTA, $datapenguji->KelompokTA, $kategoriTA) &&
-                                  file_exists(public_path('uploads/laporan/' . $datapenguji->userdosenTA->id . '-' . 'REV' . '-' . $datapenguji->KelompokTA->nama_kelompok . '-' . $kategoriTA->nama_kategori . '-' . $datapenguji->userdosenTA->name . '.pdf'
-                                      ))
-
+                                      Auth::check() && isset($datapenguji, $datapenguji->userdosenTA, $datapenguji->KelompokTA, $kategoriTA) &&
+                                      file_exists(public_path('uploads/laporan/' . $datapenguji->userdosenTA?->id . '-REV-' . $datapenguji->KelompokTA?->nama_kelompok . '-' . $kategoriTA->nama_kategori . '-' . $datapenguji->userdosenTA?->name . '.pdf'))
                                     )
                                     <h6>Revisi {{$kategoriTA->nama_kategori}} {{$datapenguji->KelompokTA->nama_kelompok}} :</h6>
                                     <button type="button" class="btn btn-info" data-toggle="modal" data-target="#pdfModal">
