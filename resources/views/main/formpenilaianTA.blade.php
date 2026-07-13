@@ -636,4 +636,3 @@ document.addEventListener('wheel', function(e) {
 </script>
 
 @endsection
-@endsection
