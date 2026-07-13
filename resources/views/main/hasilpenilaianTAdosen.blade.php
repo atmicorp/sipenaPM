@@ -64,11 +64,19 @@
                       <th class="uppercase">NO</th>
                     
                       <th class="uppercase">Mahasiswa</th>
-                      @foreach ($datapengujiByMahasiswa->flatten(1)->first() as $key => $value)
-                          @if($key !== 'id_penguji' && $key !== 'id_mahasiswa' && $key !== 'id_kelompok_ta' && $key !== 'id_dosen' && $key !== 'nama_dosen' && $key !== 'id_kelompok_ta' && $key !== 'kelompok_ta' && $key !== 'nama_mahasiswa' && $key !== 'dosen' )
-                              <th class="uppercase">{{ $key }}</th> <!-- Kolom dinamis dari array -->
-                          @endif
-                      @endforeach
+                      @php
+                          $headerRow = $datapengujiByMahasiswa->flatten(1)->first();
+                      @endphp
+
+                      @if($headerRow)
+                          @foreach ($headerRow as $key => $value)
+                              @if(!in_array($key, ['id_penguji','id_mahasiswa','id_kelompok_ta','id_dosen','nama_dosen','kelompok_ta','nama_mahasiswa','dosen']))
+                                  <th class="uppercase">{{ $key }}</th>
+                              @endif
+                          @endforeach
+                      @else
+                          <th class="uppercase">Tidak ada data penguji</th>
+                      @endif
                     </tr>
                   </thead>
                   <tbody>
