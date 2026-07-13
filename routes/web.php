@@ -58,7 +58,7 @@ Route::prefix('dokumen')->middleware(['auth', 'role:Mahasiswa'])->group(function
 
 });
 
-Route::prefix('assessment')->middleware(['auth', 'role:Dosen'])->group(function () {
+Route::prefix('assessment')->middleware(['auth', 'role:Dosen|Admin'])->group(function () {
     Route::get('praktik-kerja', [AssessmentController::class, 'penilaianmagang'])->name('penilaianmagang'); //penamaan route  
     Route::get('penilaian-praktik-kerja/{id}', [AssessmentController::class, 'formpenilaianmagang'])->name('formpenilaianmagang'); //penamaan route 
     Route::post('store-penilaian-magang', [AssessmentController::class, 'penilaianmagangstore'])->name('penilaianmagangstore'); //penamaan route   
