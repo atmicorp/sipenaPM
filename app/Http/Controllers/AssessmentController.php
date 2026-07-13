@@ -18,6 +18,7 @@ use App\Models\VerifikasiKelompokTA;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
+use Log;
 
 class AssessmentController extends Controller
 {
@@ -182,63 +183,58 @@ class AssessmentController extends Controller
 
     public function formpenilaianTA(Request $request, $id)
     {
-    
-        // dd($request, $id);
         try {
-            $user =Auth::user();
+            $user = Auth::user();
             if (!$user) {
                 abort(403, 'Profil Tidak Ditemukan');
             }
+
             $idKategoriTA = $request->query('id_kategori_ta');
-           
-            $datapenguji = DataPengujiTa::with(['statusdosenTA','KelompokTA','userdosenTA'])->where('id', $id)->first();
-            // dd($datapenguji);
+
+            $datapenguji = DataPengujiTa::with(['statusdosenTA', 'KelompokTA', 'userdosenTA'])
+                ->where('id', $id)
+                ->first();
+
+            if (!$datapenguji) {
+                return redirect()->back()->with('error', 'Data penguji tidak ditemukan');
+            }
+
+            // ==========================================
+            // CEK OTORISASI: admin bisa lihat semua data,
+            // dosen biasa hanya bisa lihat datanya sendiri
+            // ==========================================
+            $isAdmin = $user->role === 'Admin'; // sesuaikan dengan cara cek role di project kamu
+            // contoh alternatif kalau pakai Spatie: $isAdmin = $user->hasRole('admin');
+
+            if (!$isAdmin && $datapenguji->id_dosen != $user->id) {
+                abort(403, 'Anda tidak memiliki akses ke data penilaian ini');
+            }
 
             $validasiTA = VerifikasiKelompokTA::where('id_kelompok_ta', $datapenguji->id_kelompok_ta)
                 ->select('id_kelompok_ta', 'id_kategori_ta', 'status')
                 ->get();
-            $nextkategori = $idKategoriTA +1;
+
+            $nextkategori = $idKategoriTA + 1;
             $statusnext = VerifikasiKelompokTA::where('id_kelompok_ta', $datapenguji->id_kelompok_ta)
-            ->where('id_kategori_ta', $nextkategori)
-            ->select('id_kelompok_ta', 'id_kategori_ta', 'status')
-            ->first();
+                ->where('id_kategori_ta', $nextkategori)
+                ->select('id_kelompok_ta', 'id_kategori_ta', 'status')
+                ->first();
 
             $statusnow = VerifikasiKelompokTA::where('id_kelompok_ta', $datapenguji->id_kelompok_ta)
-            ->where('id_kategori_ta', $idKategoriTA)
-            ->select('id_kelompok_ta', 'id_kategori_ta', 'status')
-            ->first();
-            // dd($statusnow);
-            
+                ->where('id_kategori_ta', $idKategoriTA)
+                ->select('id_kelompok_ta', 'id_kategori_ta', 'status')
+                ->first();
+
             $kategoriTA = KategoriTA::where('id', $idKategoriTA)->first();
-            // dd($kategoriTA);
-            // Pisahkan aspekpenilaian berdasarkan tipedata
-            // agar tipe data deskripsi pada view tampil paling bawah
+
             $aspekpenilaian = AspekPenilaianTA::where('id_kategori_ta', $idKategoriTA)->get();
             [$deskripsiItems, $nonDeskripsiItems] = $aspekpenilaian->partition(function ($item) {
                 return $item->tipedata === 'Deskripsi';
             });
-            // partition() adalah metode koleksi Laravel yang membagi sebuah koleksi menjadi dua berdasarkan sebuah kondisi.
-            // Fungsi ini mengembalikan array dengan dua elemen:
-            // Elemen pertama berisi item yang memenuhi kondisi (true) $deskripsiItems.
-            // Elemen kedua berisi item yang tidak memenuhi kondisi (false) $nonDeskripsiItems.
-
-
-            // Fungsi callback function ($item) mengevaluasi setiap item dalam koleksi $aspekpenilaian untuk memeriksa apakah properti tipedata dari item bernilai 'Deskripsi'.
-            // Jika tipedata === 'Deskripsi', item dimasukkan ke dalam $deskripsiItems (elemen pertama dari hasil partition()).
-            // Jika tidak, item dimasukkan ke dalam $nonDeskripsiItems (elemen kedua dari hasil partition()).
-            // Hasil Akhir:
-
-            // $deskripsiItems akan berisi semua item dengan tipedata === 'Deskripsi'.
-            // $nonDeskripsiItems akan berisi semua item lain (bukan 'Deskripsi').
-
-            
-
-            // Gabungkan kembali dengan "Deskripsi" di urutan terakhir
             $aspekpenilaian = $nonDeskripsiItems->concat($deskripsiItems);
 
             $id_kelompok_ta = $datapenguji->id_kelompok_ta;
-            $pesertaTA = PesertaTA::with('usermahasiswaTA')->where('id_kelompok_ta', $id_kelompok_ta )->get();
-            // dd($pesertaTA);
+            $pesertaTA = PesertaTA::with('usermahasiswaTA')->where('id_kelompok_ta', $id_kelompok_ta)->get();
 
             $aspekpenilaianindividu = AspekPenilaianTAIndividu::where('id_kategori_ta', $idKategoriTA)->get();
             [$deskripsiItems, $nonDeskripsiItems] = $aspekpenilaianindividu->partition(function ($item) {
@@ -246,56 +242,46 @@ class AssessmentController extends Controller
             });
             $aspekpenilaianindividu = $nonDeskripsiItems->concat($deskripsiItems);
 
-
             $hasilpenilaianTA = PenilaianTA::where('id_data_pengujiTA', $datapenguji->id)
-            ->where('id_kategori_TA', $idKategoriTA)
-            ->get();
+                ->where('id_kategori_TA', $idKategoriTA)
+                ->get();
 
-            // Hasil penilaian Individu----------------------------------
             $hasilpenilaianTAindividu = PenilaianTAindividu::with('pengujiTAindividu')
                 ->where('id_data_pengujiTA', $datapenguji->id)
                 ->where('id_kategori_TA', $idKategoriTA)
                 ->get();
 
             $nilaiIndividu = [];
-            // Looping data untuk mengelompokkan berdasarkan id_mahasiswa
             foreach ($hasilpenilaianTAindividu as $penilaian) {
-                $user = User::where('id', $penilaian->id_mahasiswa)->first();
+                $userMahasiswa = User::where('id', $penilaian->id_mahasiswa)->first();
                 $aspekPenilaian = AspekPenilaianTAIndividu::where('id', $penilaian->id_aspekTA_individu)->first();
                 $idMahasiswa = $penilaian->id_mahasiswa;
-                
+
                 if (!isset($nilaiIndividu[$idMahasiswa])) {
-                    // Buat array baru untuk mahasiswa jika belum ada
                     $nilaiIndividu[$idMahasiswa] = [
                         "id_mahasiswa" => $idMahasiswa,
-                        "Nama" => $user ? $user->name : "Tidak Ditemukan",
-                        "NIM" => $user ? ($user->details ? $user->details->nim : "Tidak Ditemukan") : "Tidak Ditemukan",
-                        "photo" => $user ? ($user->details ? $user->details->photo : "Tidak Ditemukan") : "Tidak Ditemukan",
-                        "Penilaian" => [] // Array kosong untuk menampung aspek & nilai
+                        "Nama" => $userMahasiswa ? $userMahasiswa->name : "Tidak Ditemukan",
+                        "NIM" => $userMahasiswa ? ($userMahasiswa->details ? $userMahasiswa->details->nim : "Tidak Ditemukan") : "Tidak Ditemukan",
+                        "photo" => $userMahasiswa ? ($userMahasiswa->details ? $userMahasiswa->details->photo : "Tidak Ditemukan") : "Tidak Ditemukan",
+                        "Penilaian" => []
                     ];
                 }
-                // Tambahkan aspek penilaian ke mahasiswa terkait
                 $nilaiIndividu[$idMahasiswa]['Penilaian'][] = [
                     "Aspek_penilaian" => $aspekPenilaian ? $aspekPenilaian->aspek_penilaian : "Tidak Ditemukan",
                     "Nilai" => $penilaian->nilai
                 ];
             }
-
-            // Jika ingin array indexed (bukan associative), gunakan array_values()
             $nilaiIndividu = array_values($nilaiIndividu);
 
-            // dd($nilaiIndividu);
-             // End Hasil penilaian Individu----------------------------------
-      
-          
-            return view("main.formpenilaianTA", compact('datapenguji','aspekpenilaian', 'kategoriTA', 'aspekpenilaianindividu','pesertaTA','hasilpenilaianTA','nilaiIndividu','statusnext','statusnow'));
-        }
-        catch (\Exception $e) {
+            return view("main.formpenilaianTA", compact(
+                'datapenguji', 'aspekpenilaian', 'kategoriTA', 'aspekpenilaianindividu',
+                'pesertaTA', 'hasilpenilaianTA', 'nilaiIndividu', 'statusnext', 'statusnow'
+            ));
+        } catch (\Throwable $e) {
+            Log::error('formpenilaianTA error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Data tidak ditemukan');
         }
-       
     }
-
     public function hasilpenilaianmagang()
     {
         // jika data penilaian kosong maka return back
