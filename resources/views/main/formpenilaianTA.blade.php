@@ -49,11 +49,9 @@
                             <p class="text-center"><strong>{{ $kategoriTA->nama_kategori }}</strong></p>
                                 <div class="form-group mt-3">
                                 @if (
-                                  Auth::check() &&isset($datapenguji->userdosenTA, $datapenguji->KelompokTA, $kategoriTA) &&
-                                  file_exists(public_path('uploads/laporan/' . $datapenguji->userdosenTA->id . '-' . 'REV' . '-' . $datapenguji->KelompokTA->nama_kelompok . '-' . $kategoriTA->nama_kategori . '-' . $datapenguji->userdosenTA->name . '.pdf'
-                                      ))
-
-                                    )
+                                    Auth::check() && isset($datapenguji, $datapenguji->userdosenTA, $datapenguji->KelompokTA, $kategoriTA) &&
+                                    file_exists(public_path('uploads/laporan/' . $datapenguji->userdosenTA?->id . '-REV-' . $datapenguji->KelompokTA?->nama_kelompok . '-' . $kategoriTA->nama_kategori . '-' . $datapenguji->userdosenTA?->name . '.pdf'))
+                                  )
                                     <h6>Revisi {{$kategoriTA->nama_kategori}} {{$datapenguji->KelompokTA->nama_kelompok}} :</h6>
                                     <button type="button" class="btn btn-info" data-toggle="modal" data-target="#pdfModal">
                                         view
@@ -77,7 +75,10 @@
                                     </div>
                                     <button type="submit" class="btn btn-primary">Upload</button>
                                 </form>
-                                @if (Auth::user() && file_exists(public_path('uploads/laporan/' . $datapenguji->userdosenTA->id . '-' . 'REV' . '-' . $datapenguji->KelompokTA->nama_kelompok . '-' . $kategoriTA->nama_kategori . '-' . $datapenguji->userdosenTA->name . '.pdf')))
+                                @if (
+                                    Auth::user() && isset($datapenguji, $datapenguji->userdosenTA, $datapenguji->KelompokTA, $kategoriTA) &&
+                                    file_exists(public_path('uploads/laporan/' . $datapenguji->userdosenTA?->id . '-REV-' . $datapenguji->KelompokTA?->nama_kelompok . '-' . $kategoriTA->nama_kategori . '-' . $datapenguji->userdosenTA?->name . '.pdf'))
+                                  )
                                     <div class="modal fade" id="pdfModal" tabindex="-1" role="dialog" aria-labelledby="pdfModalLabel" aria-hidden="true">
                                         <div class="modal-dialog modal-lg" role="document">
                                             <div class="modal-content">
@@ -88,7 +89,7 @@
                                                     </button>
                                                 </div>
                                                 <div class="modal-body">
-                                                    <embed src="{{ asset('uploads/laporan/' . $datapenguji->userdosenTA->id . '-' . 'REV' . '-' . $datapenguji->KelompokTA->nama_kelompok . '-' . $kategoriTA->nama_kategori . '-' . $datapenguji->userdosenTA->name . '.pdf') }}" type="application/pdf" width="100%" height="500px">
+                                                    <embed src="{{ asset('uploads/laporan/' . $datapenguji->userdosenTA?->id . '-REV-' . $datapenguji->KelompokTA?->nama_kelompok . '-' . $kategoriTA->nama_kategori . '-' . $datapenguji->userdosenTA?->name . '.pdf') }}" type="application/pdf" width="100%" height="500px">
                                                 </div>
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
@@ -650,4 +651,3 @@ document.addEventListener('wheel', function(e) {
 </script>
 
 @endsection
-

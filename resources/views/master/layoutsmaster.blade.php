@@ -151,7 +151,7 @@
             </a>
           </li>
 
-          @role('Dosen')
+          @hasanyrole('Dosen|Admin')
 
           <li class="nav-header">FORM PENILAIAN MAGANG</li>
           <li class="nav-item {{ request()->routeIs('penilaianmagang') || request()->routeIs('hasilpenilaianmaganguntukdosen') || request()->routeIs('aspekpenilaiansp') ? 'menu-open' : '' }}">
@@ -247,10 +247,10 @@
                         </li>
                     </ul>
                 </li>
-
-          @endrole
+          @endhasanyrole
 
           @role('Admin')
+
           
           <li class="nav-header"><strong>MANAGE DATA MAGANG</strong></li>
             <li class="nav-item  {{ request()->routeIs('penempatanmagang') || request()->routeIs('viewpenempatanmagang') || request()->routeIs('setupdatamagang') || request()->routeIs('aspekpenilaian')  || request()->routeIs('resetpenilaianmagang') || request()->routeIs('hasilpenilaianmagang')? 'menu-open' : '' }} ">
