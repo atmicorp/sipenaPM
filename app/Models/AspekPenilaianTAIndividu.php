@@ -20,6 +20,6 @@ class AspekPenilaianTAIndividu extends Model
     }
     public function penilaianTAindividu()
     {
-        return $this->hasMany(PenilaianTAindividu::class, 'id_aspekTAindividu');  
+        return $this->hasMany(PenilaianTAindividu::class, 'id_aspekTA_individu');  // tambahkan underscore
     }
 }

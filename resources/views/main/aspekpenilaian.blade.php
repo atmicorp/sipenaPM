@@ -44,6 +44,15 @@
         </div>
         <!-- /.card-header -->
         <div class="card-body">
+
+          @if(isset($sudahDinilai) && $sudahDinilai)
+          <div class="alert alert-warning">
+            <i class="fas fa-lock"></i>
+            Penilaian magang sudah dilakukan. Data aspek penilaian tidak bisa ditambah atau dihapus lagi.
+            Silahkan lakukan <strong>Reset Penilaian Magang</strong> terlebih dahulu jika ingin mengubah data aspek penilaian.
+          </div>
+          @endif
+
           <div class="row">
             <div class="col-md-12">
             <table id="example2" class="table table-bordered table-hover">
@@ -71,8 +80,8 @@
                       <td><p>{!! $item->deskripsi_penilaian !!}</p></td>
                       <td>{{$item->porsi_penilaian }} %</td>     
                       <td>
-                        <!-- Form Delete hanya muncul jika ID bukan 1 -->
-                        @if ($item->id != 1)
+                        <!-- Form Delete hanya muncul jika ID bukan 1 dan penilaian belum dilakukan -->
+                        @if ($item->id != 1 && !(isset($sudahDinilai) && $sudahDinilai))
                           <form action="{{ route('deleteAspek', $item->id) }}" method="POST" style="display:inline;">
                             @csrf
                             @method('DELETE')
@@ -120,9 +129,9 @@
                       </div>
                   </div>
                   @endforeach
-                
 
-
+              <!-- Form Tambah Data hanya tampil jika penilaian magang belum dilakukan -->
+              @if(!(isset($sudahDinilai) && $sudahDinilai))
               <form method="POST" action="{{route('storeaspekdata')}}" enctype="multipart/form-data">
                 @csrf
                 <div class="form-group">
@@ -172,7 +181,8 @@
                     <i class="fa fa-floppy-o"></i> Simpan Data
                 </button>
                 </div>
-              </form> 
+              </form>
+              @endif
             </div>
           </div>
         </div>
@@ -276,67 +286,77 @@
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.getElementById('customFile');
-    fileInput.addEventListener('change', function(event) {
-      const fileName = event.target.files[0] ? event.target.files[0].name : 'No file chosen';
-      const fileLabel = fileInput.nextElementSibling;
-      fileLabel.textContent = fileName;
-    });
-  });
-</script>
-
-<script>
-  // Menambahkan baris baru saat tombol "Tambah item" diklik
-  document.getElementById('addRow').addEventListener('click', function () {
-  const tbody = document.getElementById('positionsBody');
-  const newRow = document.createElement('tr');
-  const uniqueId = `compose-textarea-${Date.now()}`; // Membuat ID unik untuk textarea
-
-  newRow.innerHTML = `
-    <td>
-      <input type="text" class="form-control" name="aspek[]" placeholder="Aspek Penilaian" required>
-    </td>
-    <td>
-      <textarea name="desk[]" id="${uniqueId}" class="form-control" style="height: 300px" required></textarea>
-    </td>
-    <td>
-      <input type="number" class="form-control" name="porsi[]" placeholder="Porsi Penilaian" required>
-    </td>
-    <td>
-      <button type="button" class="btn btn-danger btn-sm delete-row">
-        <i class="fas fa-trash"></i>
-      </button>
-    </td>
-  `;
-
-  tbody.appendChild(newRow);
-
-  // Inisialisasi Summernote pada textarea yang baru ditambahkan
-  $(`#${uniqueId}`).summernote({
-    toolbar: [
-      ['style', ['ul', 'ol']] // Menampilkan hanya tombol UL dan OL
-    ]
-  });
-});
-
-  // Menghapus baris saat tombol hapus diklik
-  document.getElementById('positionsBody').addEventListener('click', function(e) {
-    if (e.target && e.target.closest('.delete-row')) {
-      const row = e.target.closest('tr'); // Mencari baris terdekat
-      if (row) {
-        row.remove(); // Menghapus baris
-      }
+    if (fileInput) {
+      fileInput.addEventListener('change', function(event) {
+        const fileName = event.target.files[0] ? event.target.files[0].name : 'No file chosen';
+        const fileLabel = fileInput.nextElementSibling;
+        fileLabel.textContent = fileName;
+      });
     }
   });
 </script>
 
 <script>
+  // Menambahkan baris baru saat tombol "Tambah item" diklik
+  const addRowBtn = document.getElementById('addRow');
+  if (addRowBtn) {
+    addRowBtn.addEventListener('click', function () {
+      const tbody = document.getElementById('positionsBody');
+      const newRow = document.createElement('tr');
+      const uniqueId = `compose-textarea-${Date.now()}`; // Membuat ID unik untuk textarea
+
+      newRow.innerHTML = `
+        <td>
+          <input type="text" class="form-control" name="aspek[]" placeholder="Aspek Penilaian" required>
+        </td>
+        <td>
+          <textarea name="desk[]" id="${uniqueId}" class="form-control" style="height: 300px" required></textarea>
+        </td>
+        <td>
+          <input type="number" class="form-control" name="porsi[]" placeholder="Porsi Penilaian" required>
+        </td>
+        <td>
+          <button type="button" class="btn btn-danger btn-sm delete-row">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
+      `;
+
+      tbody.appendChild(newRow);
+
+      // Inisialisasi Summernote pada textarea yang baru ditambahkan
+      $(`#${uniqueId}`).summernote({
+        toolbar: [
+          ['style', ['ul', 'ol']] // Menampilkan hanya tombol UL dan OL
+        ]
+      });
+    });
+  }
+
+  // Menghapus baris saat tombol hapus diklik
+  const positionsBody = document.getElementById('positionsBody');
+  if (positionsBody) {
+    positionsBody.addEventListener('click', function(e) {
+      if (e.target && e.target.closest('.delete-row')) {
+        const row = e.target.closest('tr'); // Mencari baris terdekat
+        if (row) {
+          row.remove(); // Menghapus baris
+        }
+      }
+    });
+  }
+</script>
+
+<script>
   $(function () {
     // Add text editor dengan toolbar khusus
-    $('#compose-textarea').summernote({
-      toolbar: [
-        ['style', ['ul', 'ol']] // Menampilkan hanya tombol UL dan OL
-      ]
-    });
+    if ($('#compose-textarea').length) {
+      $('#compose-textarea').summernote({
+        toolbar: [
+          ['style', ['ul', 'ol']] // Menampilkan hanya tombol UL dan OL
+        ]
+      });
+    }
   });
 </script>
 

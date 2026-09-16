@@ -116,6 +116,8 @@ Route::prefix('manage')->middleware(['auth', 'role:Admin'])->group(function () {
     
     Route::put('kelompokta/{id}', [ManageController::class, 'kelompoktaupdate'])->name('kelompokta.update');
     Route::put('editkelompokta/{id}', [ManageController::class, 'updatekta'])->name('kta.update');
+    Route::get('kelompokta/create', [ManageController::class, 'createKelompokTA'])->name('kelompokta.create');
+    Route::post('kelompokta', [ManageController::class, 'storeKelompokTA'])->name('kelompokta.store');
    
     Route::get('setupjadwalta/{id}', [ManageController::class, 'setupjadwalta'])->name('setupjadwalta'); 
     Route::put('updatejadwalta/{id}', [ManageController::class, 'updatejadwalta'])->name('updatejadwalta'); 

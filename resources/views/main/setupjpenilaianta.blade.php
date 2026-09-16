@@ -49,6 +49,15 @@
             </div>
             <!-- /.card-header -->
             <div class="card-body">
+
+            @if(isset($sudahDinilai) && $sudahDinilai)
+            <div class="alert alert-warning">
+              <i class="fas fa-lock"></i>
+              Penilaian TA untuk kategori <strong>{{$kategoriTa->nama_kategori}}</strong> sudah dilakukan.
+              Data aspek penilaian kelompok untuk kategori ini tidak bisa ditambah atau dihapus lagi.
+            </div>
+            @endif
+
             <div class="row">
             <div class="col-md-12">
             <table id="example2" class="table table-bordered table-hover">
@@ -76,8 +85,8 @@
                       <td><p>{!! $item->deskripsi_penilaian !!}</p></td>
                       <td>{{$item->porsi_penilaian }} %</td>     
                       <td>
-                        <!-- Form Delete hanya muncul jika ID bukan 1 -->
-                        @if ($item->tipedata != "Deskripsi")
+                        <!-- Form Delete hanya muncul jika ID bukan 1 dan penilaian kategori ini belum dilakukan -->
+                        @if ($item->tipedata != "Deskripsi" && !(isset($sudahDinilai) && $sudahDinilai))
                           <form action="{{ route('deleteaspekta', $item->id) }}" method="POST" style="display:inline;">
                             @csrf
                             @method('DELETE')
@@ -91,6 +100,9 @@
                   @endforeach
                   </tbody>
                 </table>
+
+                <!-- Form Tambah Data hanya tampil jika penilaian kategori ini belum dilakukan -->
+                @if(!(isset($sudahDinilai) && $sudahDinilai))
                 <form method="POST" action="{{route('storeaspekdatata')}}" enctype="multipart/form-data">
                 @csrf
                 <div class="form-group">
@@ -140,7 +152,8 @@
                     <i class="fa fa-floppy-o"></i> Simpan Data
                 </button>
                 </div>
-              </form> 
+              </form>
+              @endif
              
             </div>
           </div>
@@ -175,24 +188,31 @@
 
 <script>
     $(function () {
-      $("#example1").DataTable({
-        "responsive": true, "lengthChange": false, "autoWidth": false, "pageLength": 5,
-        "buttons": ["excel", "pdf", "print"]
-      }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
+      if ($("#example1").length) {
+        $("#example1").DataTable({
+          "responsive": true, "lengthChange": false, "autoWidth": false, "pageLength": 5,
+          "buttons": ["excel", "pdf", "print"]
+        }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
+      }
 
-      $("#example2").DataTable({
-        "responsive": true, "lengthChange": false, "autoWidth": false, "pageLength": 5,
-        "buttons": ["excel", "pdf", "print"]
-      }).buttons().container().appendTo('#example2_wrapper .col-md-6:eq(0)');
-      $('#example3').DataTable({
-        "paging": true,
-        "lengthChange": false,
-        "searching": false,
-        "ordering": true,
-        "info": true,
-        "autoWidth": false,
-        "responsive": true,
-      });
+      if ($("#example2").length) {
+        $("#example2").DataTable({
+          "responsive": true, "lengthChange": false, "autoWidth": false, "pageLength": 5,
+          "buttons": ["excel", "pdf", "print"]
+        }).buttons().container().appendTo('#example2_wrapper .col-md-6:eq(0)');
+      }
+
+      if ($('#example3').length) {
+        $('#example3').DataTable({
+          "paging": true,
+          "lengthChange": false,
+          "searching": false,
+          "ordering": true,
+          "info": true,
+          "autoWidth": false,
+          "responsive": true,
+        });
+      }
     });
   </script>
 
@@ -220,59 +240,65 @@
 
 <script>
   // Menambahkan baris baru saat tombol "Tambah item" diklik
-  document.getElementById('addRow').addEventListener('click', function () {
-  const tbody = document.getElementById('positionsBody');
-  const newRow = document.createElement('tr');
-  const uniqueId = `compose-textarea-${Date.now()}`; // Membuat ID unik untuk textarea
+  const addRowBtn = document.getElementById('addRow');
+  if (addRowBtn) {
+    addRowBtn.addEventListener('click', function () {
+      const tbody = document.getElementById('positionsBody');
+      const newRow = document.createElement('tr');
+      const uniqueId = `compose-textarea-${Date.now()}`; // Membuat ID unik untuk textarea
 
-  newRow.innerHTML = `
-    <td>
-      <input type="text" class="form-control" name="aspek[]" placeholder="Aspek Penilaian" required>
-    </td>
-    <td>
-      <textarea name="desk[]" id="${uniqueId}" class="form-control" style="height: 300px" required></textarea>
-    </td>
-    <td>
-      <input type="number" class="form-control" name="porsi[]" placeholder="Porsi Penilaian" required>
-    </td>
-    <td>
-      <button type="button" class="btn btn-danger btn-sm delete-row">
-        <i class="fas fa-trash"></i>
-      </button>
-    </td>
-  `;
+      newRow.innerHTML = `
+        <td>
+          <input type="text" class="form-control" name="aspek[]" placeholder="Aspek Penilaian" required>
+        </td>
+        <td>
+          <textarea name="desk[]" id="${uniqueId}" class="form-control" style="height: 300px" required></textarea>
+        </td>
+        <td>
+          <input type="number" class="form-control" name="porsi[]" placeholder="Porsi Penilaian" required>
+        </td>
+        <td>
+          <button type="button" class="btn btn-danger btn-sm delete-row">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
+      `;
 
-  tbody.appendChild(newRow);
+      tbody.appendChild(newRow);
 
-  // Inisialisasi Summernote pada textarea yang baru ditambahkan
-  $(`#${uniqueId}`).summernote({
-    toolbar: [
-      ['style', ['ul', 'ol']] // Menampilkan hanya tombol UL dan OL
-    ]
-  });
-});
+      // Inisialisasi Summernote pada textarea yang baru ditambahkan
+      $(`#${uniqueId}`).summernote({
+        toolbar: [
+          ['style', ['ul', 'ol']] // Menampilkan hanya tombol UL dan OL
+        ]
+      });
+    });
+  }
 
   // Menghapus baris saat tombol hapus diklik
-  document.getElementById('positionsBody').addEventListener('click', function(e) {
-    if (e.target && e.target.closest('.delete-row')) {
-      const row = e.target.closest('tr'); // Mencari baris terdekat
-      if (row) {
-        row.remove(); // Menghapus baris
+  const positionsBody = document.getElementById('positionsBody');
+  if (positionsBody) {
+    positionsBody.addEventListener('click', function(e) {
+      if (e.target && e.target.closest('.delete-row')) {
+        const row = e.target.closest('tr'); // Mencari baris terdekat
+        if (row) {
+          row.remove(); // Menghapus baris
+        }
       }
-    }
-  });
+    });
+  }
 </script>
 
 <script>
   $(function () {
     // Add text editor dengan toolbar khusus
-    $('#compose-textarea').summernote({
-      toolbar: [
-        ['style', ['ul', 'ol']] // Menampilkan hanya tombol UL dan OL
-      ]
-    });
+    if ($('#compose-textarea').length) {
+      $('#compose-textarea').summernote({
+        toolbar: [
+          ['style', ['ul', 'ol']] // Menampilkan hanya tombol UL dan OL
+        ]
+      });
+    }
   });
 </script>
 @endsection
-
-

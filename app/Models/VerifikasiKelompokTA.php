@@ -19,7 +19,7 @@ class VerifikasiKelompokTA extends Model
 
     public function KategoriTA()
     {
-        return $this->belongsTo(KelompokTA::class, 'id_kategori_ta'); 
+        return $this->belongsTo(KategoriTA::class, 'id_kategori_ta'); 
       
     }
 }

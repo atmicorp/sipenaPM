@@ -292,13 +292,28 @@
 
 
           <li class="nav-header"><strong>MANAGE TUGAS AKHIR</strong></li>
-          <li class="nav-item">
-            <a href="{{route('manageTA')}}" class="nav-link {{ request()->routeIs('manageTA') ? 'active' : '' }}">
-              <i class="nav-icon fas fa-tasks"></i>
-              <p>
-                Konfigurasi TA
-              </p>
-            </a>
+          <li class="nav-item {{ request()->routeIs('manageTA', 'kelompokta.create') ? 'menu-open' : '' }}">
+              <a href="#" class="nav-link {{ request()->routeIs('manageTA', 'kelompokta.create') ? 'active' : '' }}">
+                  <i class="nav-icon fas fa-tasks"></i>
+                  <p>
+                      Konfigurasi TA
+                      <i class="fas fa-angle-left right"></i>
+                  </p>
+              </a>
+              <ul class="nav nav-treeview">
+                  <li class="nav-item">
+                      <a href="{{ route('kelompokta.create') }}" class="nav-link {{ request()->routeIs('kelompokta.create') ? 'active' : '' }}">
+                          <i class="far fa-circle nav-icon"></i>
+                          <p>Tambah Kelompok TA</p>
+                      </a>
+                  </li>
+                  <li class="nav-item">
+                      <a href="{{ route('manageTA') }}" class="nav-link {{ request()->routeIs('manageTA') ? 'active' : '' }}">
+                          <i class="far fa-circle nav-icon"></i>
+                          <p>Edit Kelompok TA</p>
+                      </a>
+                  </li>
+              </ul>
           </li>
           <li class="nav-item">
             <a href="{{route('aspekpenilaianindividu')}}" class="nav-link {{ request()->routeIs('aspekpenilaianindividu') ? 'active' : '' }}">

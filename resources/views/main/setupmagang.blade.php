@@ -77,12 +77,22 @@
                 </div>      
             </div>
             <div class="col-md-9">
+
+              @if($sudahDinilai)
+                <div class="alert alert-warning">
+                  <i class="fas fa-lock"></i>
+                  Penilaian magang untuk mahasiswa ini sudah dilakukan. Data pembimbing/penguji tidak bisa diubah lagi.
+                </div>
+              @endif
+
               <table class="table table-bordered table-hover">
                 <thead>
                   <tr>
                     <th>Dosen</th>
                     <th>Status</th>
+                    @unless($sudahDinilai)
                     <th>Action</th>
+                    @endunless
                   </tr>
                 </thead>
                   <tbody>
@@ -100,18 +110,18 @@
                       <td>
                         <span class="username"><strong> {{$item->status->status_dosen}}</strong></span>  
                         </td>  
+                      @unless($sudahDinilai)
                       <td>
-                        
-
                       <a href="{{ route('deletedatamagang', ['id' => $item->id]) }}" class="btn btn-sm btn-danger">
                           <i class="fas fa-trash"></i> Delete
                       </a>
-                      </td>            
+                      </td>
+                      @endunless
                   </tr>
                   @endforeach
               </table>
 
-
+              @unless($sudahDinilai)
               <form method="POST" action="{{route('storedatapembimbing')}}" enctype="multipart/form-data">
                 @csrf
                 <div class="form-group">
@@ -176,6 +186,7 @@
                 </button>
                 </div>
               </form>
+              @endunless
 
               
 

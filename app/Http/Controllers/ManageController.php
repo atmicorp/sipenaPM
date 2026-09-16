@@ -194,13 +194,21 @@ class ManageController extends Controller
             }
             $aspekindividu = AspekPenilaianTAIndividu::with('kategoriTA')->get();
             $kategoriTa = KategoriTA::get();
-            // dd($aspekindividu);
-            return view("main.setuppenilaianindividu", compact('aspekindividu','kategoriTa'));
+
+            // Kumpulkan id_kategori_ta yang aspek penilaiannya sudah pernah dipakai
+            // untuk menyimpan nilai individu (PenilaianTAindividu)
+            $kategoriTerkunci = PenilaianTAindividu::with('aspekpenilaianTAindividu')
+                ->get()
+                ->pluck('aspekpenilaianTAindividu.id_kategori_ta')
+                ->filter()
+                ->unique()
+                ->values();
+
+            return view("main.setuppenilaianindividu", compact('aspekindividu', 'kategoriTa', 'kategoriTerkunci'));
         }
         catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }  
-
     }
 
     public function aspekpenilaianta($id)
@@ -215,16 +223,19 @@ class ManageController extends Controller
 
             $totalporsi = $aspekpenilaianta->sum('porsi_penilaian') + $aspekpenilaianindividu->sum('porsi_penilaian');
             $kategoriTa = KategoriTA::where('id', $id)->first();
-            //  dd($kategoriTa);
+
             if (!$kategoriTa) {
                 return redirect()->back()->with('error', 'Data tidak ditemukan.');
             }
-            return view("main.setupjpenilaianta", compact('aspekpenilaianta','kategoriTa' ,'totalporsi'));
+
+            // Guard: sudah dinilai untuk kategori TA ini
+            $sudahDinilai = PenilaianTA::where('id_kategori_TA', $id)->exists();
+
+            return view("main.setupjpenilaianta", compact('aspekpenilaianta','kategoriTa' ,'totalporsi', 'sudahDinilai'));
         }
         catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }  
-
     }
 
     public function setupjadwalta($id)
@@ -845,23 +856,21 @@ class ManageController extends Controller
                 'statusdosen' => 'required|array',
                 'mahasiswa' => 'required|integer',
             ]);
-            
-            // dd($validatedData['statusdosen']);
 
-            // // Cek apakah ada ID peserta yang duplikat
-            // if (count($validatedData['statusdosen']) !== count(array_unique($validatedData['statusdosen']))) {
-            //     return redirect()->back()->with('error', 'Duplikasi Status Dosen, Silahkan Ulangi !');
-            // }
+            // Guard: kalau mahasiswa ini sudah dinilai, tidak boleh ada perubahan pembimbing/penguji lagi.
+            $sudahDinilai = PenilaianMagang::where('id_mahasiswa', $validatedData['mahasiswa'])->exists();
+            if ($sudahDinilai) {
+                return redirect()->back()->with('error', 'Tidak bisa menambah dosen, penilaian magang untuk mahasiswa ini sudah dilakukan.');
+            }
+
             if (count($validatedData['dosen']) !== count(array_unique($validatedData['dosen']))) {
                 return redirect()->back()->with('error', 'Duplikasi Nama Dosen, Silahkan Ulangi !');
             }
-            
 
             foreach ($validatedData['dosen'] as $key => $dosenId) {
 
                 $existingPeserta = DataPengujiMagang::where('id_dosen', $dosenId) ->where('id_mahasiswa', $request->mahasiswa)
                 ->exists();
-                // jika sudah terdaftar, returnback
                 if ($existingPeserta) {
                     return redirect()->back()->with('error', 'Data Dosen Sudah Terdaftar');
                 }
@@ -869,12 +878,10 @@ class ManageController extends Controller
                     'id_dosen' => (int)$dosenId,
                     'status_dosen' => (int)$validatedData['statusdosen'][$key],
                     'id_mahasiswa' => (int)$validatedData['mahasiswa'],
-                    
-                     // $key digunakan mengambil ID perusahaan yang sesuai dengan id mahasiswa di atas
                 ]);
             }
             return redirect()->back()->with('success', 'Data Berhasil Ditambahkan');
-           
+        
         }
         catch (\Exception $e) {
             return redirect()->back()->with('error', 'Data Gagal Ditambahkan'  . $e->getMessage());
@@ -894,23 +901,6 @@ class ManageController extends Controller
                 'porsi.*' => 'numeric', // Validasi bahwa setiap elemen dalam array 'porsi' adalah angka
             ]);
 
-            // Hitung total porsi yang sudah ada
-            // $totalPorsi = AspekPenilaianTA::where('id_kategori_ta', $validatedData['id_kategori_ta'])
-            //     ->sum('porsi_penilaian');
-
-            // // Hitung total porsi dari input baru
-            // $totalPorsiinput = array_sum($validatedData['porsi']);
-
-            // Cek apakah total porsi sudah mencapai 100%
-            // if ($totalPorsi >= 100) {
-            //     return redirect()->back()->with('error', 'Total Porsi Penilaian sudah mencapai 100%, silahkan lakukan Reset Penilaian untuk input ulang');
-            // }
-
-            // Validasi agar total porsi tidak lebih atau kurang dari 100%
-            // if ($totalPorsi + $totalPorsiinput !== 100) {
-            //     return redirect()->back()->with('error', 'Total Porsi Penilaian harus tepat 100%');
-            // }
-           
             $id_kategori_ta = $validatedData['id_kategori_ta'];
             // Cari data PenilaianTA berdasarkan id_kategori_ta
             $penilaian = PenilaianTA::where('id_kategori_TA', $id_kategori_ta)->first();
@@ -946,6 +936,12 @@ class ManageController extends Controller
     {
         $item = AspekPenilaianTA::findOrFail($id);
 
+        // Guard: item dengan tipedata "Deskripsi" tidak boleh dihapus sama sekali,
+        // sesuai proteksi yang juga diterapkan di blade (item->tipedata != "Deskripsi")
+        if ($item->tipedata == "Deskripsi") {
+            return redirect()->back()->with('error', 'Data ini tidak bisa dihapus.');
+        }
+
         $penilaian = PenilaianTA::where('id_kategori_TA', $item->id_kategori_ta)->first();
         if ($penilaian) {
             return redirect()->back()->with('error', 'Anda tidak bisa menghapus data, karena sudah dilakukan penilaian');
@@ -958,31 +954,32 @@ class ManageController extends Controller
 
     public function storeaspekdatataindividu(Request $request)
     {
-        // dd($request);
         try {
             $validatedData = $request->validate([
                 'aspek' => 'required|array',
                 'id_kategori_ta' => 'required|array',
                 'desk' => 'required|array',
                 'porsi' => 'required|array',
-                'porsi.*' => 'numeric', // Validasi bahwa setiap elemen dalam array 'porsi' adalah angka
+                'porsi.*' => 'numeric',
             ]);
 
+            $kategoriIds = $validatedData['id_kategori_ta'];
 
-            $id_kategori_ta = $validatedData['id_kategori_ta'];
-            // Cari data PenilaianTA berdasarkan id_kategori_ta
-            $penilaian = PenilaianTA::where('id_kategori_TA', $id_kategori_ta)->first();
-            // Jika data penilaian TA sudah ada, kembalikan dengan pesan error
-            if ($penilaian) {
-                return redirect()->back()->with('error', 'Anda tidak bisa menambah data, karena sudah dilakukan penilaian');
+            // Guard: cek tabel PenilaianTAindividu, di-scope ke kategori-kategori
+            // yang ada di input (bukan PenilaianTA/global)
+            $sudahDinilai = PenilaianTAindividu::whereHas('aspekpenilaianTAindividu', function ($q) use ($kategoriIds) {
+                $q->whereIn('id_kategori_ta', $kategoriIds);
+            })->exists();
+
+            if ($sudahDinilai) {
+                return redirect()->back()->with('error', 'Anda tidak bisa menambah data, karena sudah dilakukan penilaian untuk kategori ini');
             }
 
-            // Persiapan data untuk dimasukkan ke database
             $data = [];
             foreach ($validatedData['aspek'] as $key => $aspekId) {
                 $data[] = [
                     'aspek_penilaian' => $aspekId,
-                    'porsi_penilaian' => (int) $validatedData['porsi'][$key], // Konversi ke integer
+                    'porsi_penilaian' => (int) $validatedData['porsi'][$key],
                     'deskripsi_penilaian' => $validatedData['desk'][$key],
                     'id_kategori_ta' => $validatedData['id_kategori_ta'][$key],
                     'tipedata' => 'Input',
@@ -991,29 +988,35 @@ class ManageController extends Controller
                 ];
             }
 
-            // Simpan ke database
             AspekPenilaianTAIndividu::insert($data);
             return redirect()->back()->with('success', 'Data Berhasil Ditambahkan');
 
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Data Gagal Ditambahkan ssss: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Data Gagal Ditambahkan: ' . $e->getMessage());
         }
     }
-   
+
     public function deleteaspektaindividu($id)
     {
-        $penilaian = PenilaianTAindividu::first();  
-            // Jika data penilaian magang ada, arahkan kembali dengan pesan error
-            if ($penilaian) {
-            return redirect()->back()->with('error', 'Anda tidak bisa menghapus data, karena sudah dilakukan penilaian');
-            }
-        // Mencari data berdasarkan ID
-        $item =AspekPenilaianTAIndividu::findOrFail($id);
+        $item = AspekPenilaianTAIndividu::findOrFail($id);
 
-        // Menghapus data
+        // Guard: item dengan tipedata "Deskripsi" tidak boleh dihapus sama sekali,
+        // sesuai proteksi yang juga diterapkan di blade (item->tipedata != "Deskripsi")
+        if ($item->tipedata == "Deskripsi") {
+            return redirect()->back()->with('error', 'Data ini tidak bisa dihapus.');
+        }
+
+        // Guard: scope ke kategori milik item ini saja, bukan global
+        $sudahDinilai = PenilaianTAindividu::whereHas('aspekpenilaianTAindividu', function ($q) use ($item) {
+            $q->where('id_kategori_ta', $item->id_kategori_ta);
+        })->exists();
+
+        if ($sudahDinilai) {
+            return redirect()->back()->with('error', 'Anda tidak bisa menghapus data, karena sudah dilakukan penilaian untuk kategori ini');
+        }
+
         $item->delete();
 
-        // Mengembalikan respons dengan pesan sukses
         return redirect()->back()->with('success', 'Data berhasil dihapus');
     }
     // end ta------------------------------------------------
@@ -1115,10 +1118,18 @@ class ManageController extends Controller
                 })->get();
 
             $pesertamagang = PesertaMagang::where('id', $id)->first();
+            if (!$pesertamagang) {
+                return redirect()->back()->with('error', 'Data peserta tidak ditemukan');
+            }
+
             $statusdosen = StatusDosen::all();
             $pengujimagang = DataPengujiMagang::where('id_mahasiswa', $pesertamagang->id_mahasiswa)->get();
-           
-            return view("main.setupmagang", compact('dosen', 'pesertamagang','statusdosen','pengujimagang'));
+
+            // Guard: kalau penilaian magang untuk mahasiswa ini sudah dilakukan,
+            // form tambah/edit pembimbing harus dikunci.
+            $sudahDinilai = PenilaianMagang::where('id_mahasiswa', $pesertamagang->id_mahasiswa)->exists();
+
+            return view("main.setupmagang", compact('dosen', 'pesertamagang','statusdosen','pengujimagang','sudahDinilai'));
         }
         catch (\Exception $e) {
             return redirect()->back()->with('error', 'Data tidak ditemukan');
@@ -1128,18 +1139,24 @@ class ManageController extends Controller
     public function deletedatamagang($id)
     {
         try {
-            
-            // Menghapus data berdasarkan ID
-            DataPengujiMagang::where('id', $id)->delete();
-    
+            $penguji = DataPengujiMagang::findOrFail($id);
+
+            $sudahDinilai = PenilaianMagang::where('id_mahasiswa', $penguji->id_mahasiswa)->exists();
+
+            if ($sudahDinilai) {
+                return redirect()->back()->with('error', 'Data pembimbing/penguji tidak bisa dihapus karena penilaian magang sudah dilakukan.');
+            }
+
+            $penguji->delete();
+
             return redirect()->back()->with('success', 'Data berhasil dihapus');
         }
         catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Data gagal dihapus');
+            return redirect()->back()->with('error', 'Data gagal dihapus: ' . $e->getMessage());
         }
     }
 
-    public function  aspekpenilaian()
+    public function aspekpenilaian()
     {
         try {
             $user = Auth::user();
@@ -1148,27 +1165,32 @@ class ManageController extends Controller
             }
 
             $dataaspek = DataAspekPenilaianMagang::all();
-            
-           
-            return view("main.aspekpenilaian", compact('dataaspek'));
+            $sudahDinilai = PenilaianMagang::exists();
+
+            return view("main.aspekpenilaian", compact('dataaspek', 'sudahDinilai'));
         }
         catch (\Exception $e) {
             return redirect()->back()->with('error', 'Data tidak ditemukan');
         }  
-
     }
 
 
 
     public function deleteaspek($id)
     {
-        $penilaian = PenilaianMagang::first();  
-            // Jika data penilaian magang ada, arahkan kembali dengan pesan error
-            if ($penilaian) {
-            return redirect()->back()->with('error', 'Anda tidak bisa menghapus data, karena sudah dilakukan penilaian');
-            }
-        // Mencari data berdasarkan ID
         $item = DataAspekPenilaianMagang::findOrFail($id);
+
+        // Guard: item dengan id 1 tidak boleh dihapus sama sekali,
+        // sesuai proteksi yang juga diterapkan di blade (item->id != 1)
+        if ($item->id == 1) {
+            return redirect()->back()->with('error', 'Data aspek ini tidak bisa dihapus.');
+        }
+
+        $penilaian = PenilaianMagang::first();
+        // Jika data penilaian magang ada, arahkan kembali dengan pesan error
+        if ($penilaian) {
+            return redirect()->back()->with('error', 'Anda tidak bisa menghapus data, karena sudah dilakukan penilaian');
+        }
 
         // Menghapus data
         $item->delete();
@@ -1230,29 +1252,134 @@ class ManageController extends Controller
 
     public function resetDatabase()
     {
+        $user = Auth::user();
+        if (!$user) {
+            abort(403, 'Profil Tidak Ditemukan');
+        }
+
+        DB::beginTransaction();
         try {
-            // Matikan foreign key checks agar bisa menghapus tabel dengan relasi
-          DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            // Cari User yang BUKAN Admin/Dosen (otomatis = Mahasiswa).
+            // User Admin & Dosen TIDAK disentuh sama sekali di bawah ini.
+            $userIdsToDelete = User::whereDoesntHave('roles', function ($query) {
+                $query->whereIn('name', ['Admin', 'Dosen']);
+            })->pluck('id');
 
-            // Ambil semua nama tabel dalam database
-            $tables = DB::select('SHOW TABLES');
+            // ---------- MODUL MAGANG ----------
+            PenilaianMagang::query()->delete();
+            DataPengujiMagang::query()->delete();
+            PesertaMagang::query()->delete();
+            DataAspekPenilaianMagang::query()->delete();
+            DataPerusahaanMagang::query()->delete();
 
-            // Loop dan hapus semua tabel
-            foreach ($tables as $table) {
-                $tableName = array_values((array) $table)[0]; // Ambil nama tabel
-                Schema::dropIfExists($tableName);
+            // ---------- MODUL TUGAS AKHIR / TA ----------
+            PenilaianTA::query()->delete();
+            PenilaianTAindividu::query()->delete();
+            DataPengujiTa::query()->delete();
+            VerifikasiKelompokTA::query()->delete();
+            JadwalTA::query()->delete();
+            PesertaTA::query()->delete();
+            KelompokTA::query()->delete();
+            AspekPenilaianTA::query()->delete();
+            AspekPenilaianTAIndividu::query()->delete();
+            // KategoriTA SENGAJA TIDAK dihapus: belum ada form Admin untuk
+            // input ulang KategoriTA, dan urutan id-nya dipakai sebagai
+            // acuan tahapan sidang (lihat AssessmentController::lanjutPenilaian,
+            // $idkatTA = id_kategori_ta + 1). Menghapus & menginput ulang
+            // manual di DB berisiko mengacaukan urutan tahapan.
+
+            // ---------- MASTER DATA PENUNJANG ----------
+            // StatusDosen SENGAJA TIDAK dihapus: belum ada form Admin untuk
+            // input ulang StatusDosen, dan datanya dipakai lintas tahun ajaran
+            // (Pembimbing/Penguji/Ketua Penguji/Anggota Penguji tidak berubah).
+
+            // ---------- HAPUS USER SELAIN ADMIN & DOSEN ----------
+            DB::table('model_has_roles')
+                ->where('model_type', User::class)
+                ->whereIn('model_id', $userIdsToDelete)
+                ->delete();
+
+            User::whereIn('id', $userIdsToDelete)->delete(); // user_details ikut kehapus (cascade)
+
+            DB::commit();
+
+            return back()->with('success', 'Semua data berhasil direset. Data Admin, Dosen, Kategori TA, dan Status Dosen tetap tersimpan.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    public function createKelompokTA()
+    {
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                abort(403, 'Profil Tidak Ditemukan');
             }
 
-            // Hidupkan kembali foreign key checks
-            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            // Selama masih ada penilaian TA (kelompok maupun individu) yang tersimpan,
+            // form generate kelompok TA baru harus dikunci. Admin wajib reset data
+            // penilaian tahun ajaran sebelumnya dahulu sebelum bisa membuat kelompok baru.
+            $sudahAdaPenilaian = PenilaianTA::exists() || PenilaianTAindividu::exists();
 
-            // Jalankan kembali migrasi dan seeder jika diperlukan
-            Artisan::call('migrate'); // Sekarang Artisan sudah dikenali
-            Artisan::call('db:seed');
+            return view('main.createkelompokta', compact('sudahAdaPenilaian'));
+        }
+        catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Data tidak ditemukan');
+        }
+    }
 
-            return back()->with('success', 'Semua data dalam database telah dihapus dan direset!');
+
+    public function storeKelompokTA(Request $request)
+    {
+        $sudahAdaPenilaian = PenilaianTA::exists() || PenilaianTAindividu::exists();
+
+        if ($sudahAdaPenilaian) {
+            return redirect()->back()->with('error', 'Tidak bisa membuat kelompok TA baru, karena sudah ada penilaian yang dilakukan.');
+        }
+
+        $validated = $request->validate([
+            'nama_kelompok' => 'required|array|min:1',
+            'nama_kelompok.*' => 'required|string|max:255',
+            'tahun_perkuliahan' => 'required|string|max:20',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $kategoriList = KategoriTA::pluck('id');
+
+            foreach ($validated['nama_kelompok'] as $nama) {
+                $kelompokTA = KelompokTA::create([
+                    'nama_kelompok' => $nama,
+                    'judul_ta' => null,
+                    'sk' => null,
+                    'tahun_perkuliahan' => $validated['tahun_perkuliahan'],
+                ]);
+
+                foreach ($kategoriList as $kategoriId) {
+                    JadwalTA::create([
+                        'id_kelompok_ta' => $kelompokTA->id,
+                        'id_kategori_ta' => $kategoriId,
+                        'tanggal_presentasi' => null,
+                        'jam_presentasi' => null,
+                        'jam_presentasi_selesai' => null,
+                        'lokasi' => null,
+                    ]);
+
+                    VerifikasiKelompokTA::create([
+                        'id_kelompok_ta' => $kelompokTA->id,
+                        'id_kategori_ta' => $kategoriId,
+                        'status' => '0',
+                    ]);
+                }
+            }
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Kelompok TA berhasil ditambahkan.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Gagal menambahkan kelompok TA: ' . $e->getMessage());
         }
     }
 }

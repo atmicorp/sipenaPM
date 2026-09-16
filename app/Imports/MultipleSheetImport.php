@@ -11,10 +11,13 @@ class MultipleSheetImport implements WithMultipleSheets
     public function sheets(): array
     {
         return [
-            'Sheet1' => new UsersImport(), // Nama sheet pertama
-            'Sheet2' => new DataPengujiImport(), // Nama sheet kedua
-            'Sheet3' => new DataPerusahaanImport(), // Nama sheet ketiga
-            'Sheet4' => new DataPesertaMagangImport(), // Nama sheet keempat
+            // Sheet2 (data penguji/pembimbing magang) sengaja TIDAK dipetakan lagi.
+            // Penugasan dosen pembimbing & penguji sekarang dilakukan manual di
+            // sistem lewat halaman "Set Up Data Praktik Kerja" (storedatapembimbing),
+            // bukan lagi dari file Excel saat upload data awal.
+            'Sheet1' => new UsersImport(),           // Nama sheet pertama (User: mahasiswa & dosen)
+            'Sheet2' => new DataPerusahaanImport(),  // Nama sheet ketiga (data perusahaan)
+            'Sheet3' => new DataPesertaMagangImport(),// Nama sheet keempat (peserta magang)
         ];
     }
 }

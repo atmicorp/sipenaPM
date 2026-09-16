@@ -49,6 +49,18 @@
             </div>
             <!-- /.card-header -->
             <div class="card-body">
+
+            @if(isset($kategoriTerkunci) && $kategoriTerkunci->isNotEmpty())
+            <div class="alert alert-warning">
+              <i class="fas fa-lock"></i>
+              Penilaian individu untuk kategori berikut sudah dilakukan, sehingga aspek penilaian pada kategori tersebut
+              tidak bisa ditambah atau dihapus lagi:
+              <strong>
+                {{ $kategoriTa->whereIn('id', $kategoriTerkunci)->pluck('nama_kategori')->implode(', ') }}
+              </strong>
+            </div>
+            @endif
+
             <div class="row">
             <div class="col-md-12">
             <table id="example2" class="table table-bordered table-hover">
@@ -64,6 +76,9 @@
                   </thead>
                   <tbody>
                   @foreach ($aspekindividu as $item)
+                    @php
+                        $itemTerkunci = isset($kategoriTerkunci) && $kategoriTerkunci->contains($item->id_kategori_ta);
+                    @endphp
                     <tr>
                       <td>{{$loop->iteration}}</td>
                       <td>
@@ -74,12 +89,17 @@
                           <span class="description">{{$item->tipedata }}</span>
                         </div>
                       </td>
-                      <td>{{$item->kategoriTA->nama_kategori}}</td>
+                      <td>
+                        {{$item->kategoriTA->nama_kategori}}
+                        @if($itemTerkunci)
+                          <span class="badge badge-warning"><i class="fas fa-lock"></i> Terkunci</span>
+                        @endif
+                      </td>
                       <td><p>{!! $item->deskripsi_penilaian !!}</p></td>
                       <td>{{$item->porsi_penilaian }} %</td>     
                       <td>
-                        <!-- Form Delete hanya muncul jika ID bukan 1 -->
-                        @if ($item->tipedata != "Deskripsi")
+                        <!-- Form Delete hanya muncul jika ID bukan 1 dan kategori item ini belum dinilai -->
+                        @if ($item->tipedata != "Deskripsi" && !$itemTerkunci)
                           <form action="{{ route('deleteaspektaindividu', $item->id) }}" method="POST" style="display:inline;">
                             @csrf
                             @method('DELETE')
@@ -93,6 +113,17 @@
                   @endforeach
                   </tbody>
                 </table>
+
+                @php
+                    $semuaKategoriTerkunci = isset($kategoriTerkunci)
+                        && $kategoriTa->pluck('id')->diff($kategoriTerkunci)->isEmpty();
+                @endphp
+
+                @if($semuaKategoriTerkunci)
+                  <div class="alert alert-secondary">
+                    Semua kategori TA sudah memiliki penilaian individu. Tidak ada kategori yang tersedia untuk ditambah aspek penilaian baru.
+                  </div>
+                @else
                 <form method="POST" action="{{route('storeaspekdatataindividu')}}" enctype="multipart/form-data">
                 @csrf
                 <div class="form-group">
@@ -117,7 +148,12 @@
                          <select class="form-control" name="id_kategori_ta[]" required>
                               <option value="" disabled selected>Pilih Kategori TA</option>
                               @foreach($kategoriTa as $kategori)
-                                  <option value="{{ $kategori->id }}">{{ $kategori->nama_kategori }}</option>
+                                  @php
+                                      $kategoriIniTerkunci = isset($kategoriTerkunci) && $kategoriTerkunci->contains($kategori->id);
+                                  @endphp
+                                  <option value="{{ $kategori->id }}" @if($kategoriIniTerkunci) disabled @endif>
+                                      {{ $kategori->nama_kategori }} @if($kategoriIniTerkunci) (Sudah Dinilai) @endif
+                                  </option>
                               @endforeach
                           </select>
                          </td>
@@ -150,7 +186,8 @@
                     <i class="fa fa-floppy-o"></i> Simpan Data
                 </button>
                 </div>
-              </form> 
+              </form>
+              @endif
              
             </div>
           </div>
@@ -185,24 +222,31 @@
 
 <script>
     $(function () {
-      $("#example1").DataTable({
-        "responsive": true, "lengthChange": false, "autoWidth": false, "pageLength": 5,
-        "buttons": ["excel", "pdf", "print"]
-      }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
+      if ($("#example1").length) {
+        $("#example1").DataTable({
+          "responsive": true, "lengthChange": false, "autoWidth": false, "pageLength": 5,
+          "buttons": ["excel", "pdf", "print"]
+        }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
+      }
 
-      $("#example2").DataTable({
-        "responsive": true, "lengthChange": false, "autoWidth": false, "pageLength": 5,
-        "buttons": ["excel", "pdf", "print"]
-      }).buttons().container().appendTo('#example2_wrapper .col-md-6:eq(0)');
-      $('#example3').DataTable({
-        "paging": true,
-        "lengthChange": false,
-        "searching": false,
-        "ordering": true,
-        "info": true,
-        "autoWidth": false,
-        "responsive": true,
-      });
+      if ($("#example2").length) {
+        $("#example2").DataTable({
+          "responsive": true, "lengthChange": false, "autoWidth": false, "pageLength": 5,
+          "buttons": ["excel", "pdf", "print"]
+        }).buttons().container().appendTo('#example2_wrapper .col-md-6:eq(0)');
+      }
+
+      if ($('#example3').length) {
+        $('#example3').DataTable({
+          "paging": true,
+          "lengthChange": false,
+          "searching": false,
+          "ordering": true,
+          "info": true,
+          "autoWidth": false,
+          "responsive": true,
+        });
+      }
     });
   </script>
 
@@ -230,67 +274,76 @@
 
 <script>
   // Menambahkan baris baru saat tombol "Tambah item" diklik
-  document.getElementById('addRow').addEventListener('click', function () {
-  const tbody = document.getElementById('positionsBody');
-  const newRow = document.createElement('tr');
-  const uniqueId = `compose-textarea-${Date.now()}`; // Membuat ID unik untuk textarea
+  const addRowBtn = document.getElementById('addRow');
+  if (addRowBtn) {
+    addRowBtn.addEventListener('click', function () {
+      const tbody = document.getElementById('positionsBody');
+      const newRow = document.createElement('tr');
+      const uniqueId = `compose-textarea-${Date.now()}`; // Membuat ID unik untuk textarea
 
-  newRow.innerHTML = `
-    <td>
-       <input type="text" class="form-control" name="aspek[]" placeholder="Aspek Penilaian" required>
-       </td>
+      newRow.innerHTML = `
         <td>
-        <select class="form-control" name="id_kategori_ta[]" required>
-             <option value="" disabled selected>Pilih Kategori TA</option>
-             @foreach($kategoriTa as $kategori)
-                 <option value="{{ $kategori->id }}">{{ $kategori->nama_kategori }}</option>
-                @endforeach
-      </select>
+           <input type="text" class="form-control" name="aspek[]" placeholder="Aspek Penilaian" required>
+           </td>
+            <td>
+            <select class="form-control" name="id_kategori_ta[]" required>
+                 <option value="" disabled selected>Pilih Kategori TA</option>
+                 @foreach($kategoriTa as $kategori)
+                     @php
+                         $kategoriIniTerkunciJs = isset($kategoriTerkunci) && $kategoriTerkunci->contains($kategori->id);
+                     @endphp
+                     <option value="{{ $kategori->id }}" @if($kategoriIniTerkunciJs) disabled @endif>{{ $kategori->nama_kategori }}@if($kategoriIniTerkunciJs) (Sudah Dinilai)@endif</option>
+                    @endforeach
+          </select>
+           </td>
+          <td>
+         <textarea name="desk[]" id="${uniqueId}" class="form-control" style="height: 300px" required></textarea>
+            </td>
+           <td>
+         <input type="number" class="form-control" name="porsi[]" placeholder="Porsi Penilaian" required>
        </td>
-      <td>
-     <textarea name="desk[]" id="${uniqueId}" class="form-control" style="height: 300px" required></textarea>
-        </td>
-       <td>
-     <input type="number" class="form-control" name="porsi[]" placeholder="Porsi Penilaian" required>
-   </td>
-       <td>
-     <button type="button" class="btn btn-danger btn-sm delete-row">
-      <i class="fas fa-trash"></i>
-       </button>
-        </td>                    
-  `;
+           <td>
+         <button type="button" class="btn btn-danger btn-sm delete-row">
+          <i class="fas fa-trash"></i>
+           </button>
+            </td>                    
+      `;
 
-  tbody.appendChild(newRow);
+      tbody.appendChild(newRow);
 
-  // Inisialisasi Summernote pada textarea yang baru ditambahkan
-  $(`#${uniqueId}`).summernote({
-    toolbar: [
-      ['style', ['ul', 'ol']] // Menampilkan hanya tombol UL dan OL
-    ]
-  });
-});
+      // Inisialisasi Summernote pada textarea yang baru ditambahkan
+      $(`#${uniqueId}`).summernote({
+        toolbar: [
+          ['style', ['ul', 'ol']] // Menampilkan hanya tombol UL dan OL
+        ]
+      });
+    });
+  }
 
   // Menghapus baris saat tombol hapus diklik
-  document.getElementById('positionsBody').addEventListener('click', function(e) {
-    if (e.target && e.target.closest('.delete-row')) {
-      const row = e.target.closest('tr'); // Mencari baris terdekat
-      if (row) {
-        row.remove(); // Menghapus baris
+  const positionsBody = document.getElementById('positionsBody');
+  if (positionsBody) {
+    positionsBody.addEventListener('click', function(e) {
+      if (e.target && e.target.closest('.delete-row')) {
+        const row = e.target.closest('tr'); // Mencari baris terdekat
+        if (row) {
+          row.remove(); // Menghapus baris
+        }
       }
-    }
-  });
+    });
+  }
 </script>
 
 <script>
   $(function () {
     // Add text editor dengan toolbar khusus
-    $('#compose-textarea').summernote({
-      toolbar: [
-        ['style', ['ul', 'ol']] // Menampilkan hanya tombol UL dan OL
-      ]
-    });
+    if ($('#compose-textarea').length) {
+      $('#compose-textarea').summernote({
+        toolbar: [
+          ['style', ['ul', 'ol']] // Menampilkan hanya tombol UL dan OL
+        ]
+      });
+    }
   });
 </script>
 @endsection
-
-
