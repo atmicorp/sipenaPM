@@ -71,72 +71,78 @@ class AssessmentController extends Controller
 
     public function penilaianTA($id, Request $request)
     {
-        // $idKategoriTA = $request->query('id_kategori_ta');
-        // dd($id, $idKategoriTA);
-
         try {
-            $user =Auth::user();
+            $user = Auth::user();
             if (!$user) {
                 abort(403, 'Profil Tidak Ditemukan');
             }
-           // Ambil data penguji magang berdasarkan dosen yang sedang login
-            $pengujiTA = DataPengujiTa::with(['statusdosenTA','KelompokTA'])->where('id_dosen', Auth::user()->id)->get();
+
+            // Filter berdasarkan id_kategori_ta ($id) juga
+            $pengujiTA = DataPengujiTa::with(['statusdosenTA','KelompokTA'])
+                ->where('id_dosen', Auth::user()->id)
+                ->where('id_kategori_ta', $id)   // <-- tambahan ini
+                ->get();
+
             $idKelompokTA = $pengujiTA->pluck('id_kelompok_ta');
 
-            // Ambil data Peserta TA dari data peserta berdasarkan kelompok TA data penguji
             $pesertaTA = PesertaTA::with('usermahasiswaTA')
                 ->whereIn('id_kelompok_ta', $idKelompokTA)
                 ->get();
-                // dd($pesertaTA);
 
             $kategoriTA = KategoriTA::where('id', $id)->first();
-            // dd($kategoriTA);
-           
-            // // Ambil semua id_dosen dari $pesertamagang
-            // $datapenguji = $pengujiTA->pluck('id');
-            //  dd($pengujiTA);
-                                   
+
             return view("main.penilaianTA", compact('user','pesertaTA','pengujiTA','kategoriTA'));
         }
         catch (\Exception $e) {
             return redirect()->back()->with('error', 'Profile tidak ditemukan');
         }
-       
     }
 
     public function tolakPenilaian(Request $request)
     {
-        // dd($request);
         try {
-            $datamahasiswa = PesertaTA::where('id_kelompok_ta', $request->id_kelompok_ta)
-            ->pluck('id_mahasiswa');
-            // dd($datamahasiswa);
-
-            PenilaianTAindividu::whereIn('id_mahasiswa', $datamahasiswa)
-            ->where('id_kategori_ta', $request->id_kategori_ta)
-            ->delete();
-
-            PenilaianTA::where('id_kelompok_ta', $request->id_kelompok_ta)
-            ->where('id_kategori_ta', $request->id_kategori_ta)
-            ->delete();
-
-            JadwalTA::where('id_kelompok_ta', $request->id_kelompok_ta)
-            ->where('id_kategori_ta', $request->id_kategori_ta)
-            ->update([
-                'tanggal_presentasi' => null,
-                'jam_presentasi' => null,
-                'jam_presentasi_selesai' => null,
-                'lokasi' => null,
+            $request->validate([
+                'id_kelompok_ta' => 'required|integer',
+                'id_kategori_ta' => 'required|integer',
             ]);
 
-            
+            // VERIFIKASI: pastikan Ketua Penguji
+            $penguji = DataPengujiTa::where('id_kelompok_ta', $request->id_kelompok_ta)
+                ->where('id_kategori_ta', $request->id_kategori_ta)
+                ->where('id_dosen', Auth::id())
+                ->where('status_dosen', 3)
+                ->first();
+
+            if (!$penguji) {
+                return redirect()->back()->with('error', 'Hanya Ketua Penguji yang dapat melakukan aksi ini.');
+            }
+
+            $datamahasiswa = PesertaTA::where('id_kelompok_ta', $request->id_kelompok_ta)
+                ->pluck('id_mahasiswa');
+
+            PenilaianTAindividu::whereIn('id_mahasiswa', $datamahasiswa)
+                ->where('id_kategori_ta', $request->id_kategori_ta)
+                ->delete();
+
+            PenilaianTA::where('id_kelompok_ta', $request->id_kelompok_ta)
+                ->where('id_kategori_ta', $request->id_kategori_ta)
+                ->delete();
+
+            JadwalTA::where('id_kelompok_ta', $request->id_kelompok_ta)
+                ->where('id_kategori_ta', $request->id_kategori_ta)
+                ->update([
+                    'tanggal_presentasi' => null,
+                    'jam_presentasi' => null,
+                    'jam_presentasi_selesai' => null,
+                    'lokasi' => null,
+                ]);
+
             VerifikasiKelompokTA::where('id_kelompok_ta', $request->id_kelompok_ta)
-            ->where('id_kategori_ta',  $request->id_kategori_ta)
-            ->update(['status'=>'3']);
+                ->where('id_kategori_ta', $request->id_kategori_ta)
+                ->update(['status' => '3']);
 
             return redirect()->back()->with('success', 'Penilaian berhasil ditolak dan data terkait telah dihapus.');
         }
-          
         catch (\Exception $e) {
             return redirect()->back()->with('error', 'Data tidak ditemukan');
         }
@@ -144,37 +150,54 @@ class AssessmentController extends Controller
 
     public function lanjutPenilaian(Request $request)
     {
-        // dd($request);
-      
         try {
+            $request->validate([
+                'id_kelompok_ta' => 'required|integer',
+                'id_kategori_ta' => 'required|integer',
+            ]);
+
             $idkelTA = $request->id_kelompok_ta;
             $idkatTA = $request->id_kategori_ta + 1;
             $idkatTAnow = $request->id_kategori_ta;
 
-           $cek = VerifikasiKelompokTA::where('id_kelompok_ta', $idkelTA)->get();
-           $lastIdKategori = $cek->last()->id_kategori_ta;
+            // VERIFIKASI: pastikan yang login adalah Ketua Penguji (status_dosen == 3) untuk kelompok+kategori ini
+            $penguji = DataPengujiTa::where('id_kelompok_ta', $idkelTA)
+                ->where('id_kategori_ta', $idkatTAnow)
+                ->where('id_dosen', Auth::id())
+                ->where('status_dosen', 3)
+                ->first();
 
-            if ($request->id_kategori_ta == $lastIdKategori) {
+            if (!$penguji) {
+                return redirect()->back()->with('error', 'Hanya Ketua Penguji yang dapat melakukan aksi ini.');
+            }
+
+            $cek = VerifikasiKelompokTA::where('id_kelompok_ta', $idkelTA)
+                ->orderBy('id_kategori_ta')
+                ->get();
+
+            if ($cek->isEmpty()) {
+                return redirect()->back()->with('error', 'Data verifikasi kelompok tidak ditemukan.');
+            }
+
+            $lastIdKategori = $cek->last()->id_kategori_ta;
+
+            if ($idkatTAnow == $lastIdKategori) {
                 VerifikasiKelompokTA::where('id_kelompok_ta', $idkelTA)
-                    ->where('id_kategori_ta', $request->id_kategori_ta)
+                    ->where('id_kategori_ta', $idkatTAnow)
                     ->update(['status' => '4']);
-
                 return redirect()->back()->with('success', 'Silahkan Lakukan Penilaian');
             } else {
                 VerifikasiKelompokTA::where('id_kelompok_ta', $idkelTA)
                     ->where('id_kategori_ta', $idkatTA)
                     ->update(['status' => '1']);
-                
-                    VerifikasiKelompokTA::where('id_kelompok_ta', $idkelTA)
+
+                VerifikasiKelompokTA::where('id_kelompok_ta', $idkelTA)
                     ->where('id_kategori_ta', $idkatTAnow)
                     ->update(['status' => '2']);
-            
+
                 return redirect()->back()->with('success', 'Silahkan Lakukan Penilaian');
             }
-
-            return redirect()->back()->with('success', 'Silahkan Lakukan Penilaian');
         }
-          
         catch (\Exception $e) {
             return redirect()->back()->with('error', 'Data tidak ditemukan');
         }
@@ -498,7 +521,8 @@ class AssessmentController extends Controller
             try {
              // Penilaian Kelompok ----------------------------------------------------------------------
             // 1. ambil data penguji magang, dan kelompokkan berdasarkan Kelompok TA
-            $datapengujiTA = DataPengujiTa::get(['id', 'id_dosen', 'id_kelompok_ta'])
+            $datapengujiTA = DataPengujiTa::where('id_kategori_ta', $id)
+            ->get(['id', 'id_dosen', 'id_kelompok_ta'])
             ->groupBy('id_kelompok_ta')
             ->map(function ($items) { // $items adalah collection dari kelompok TA yang sama
                 return $items->map(function ($item) { // Iterasi tiap objek dalam kelompok
@@ -676,7 +700,9 @@ class AssessmentController extends Controller
             $pesertaTA = PesertaTA::get(['id_mahasiswa', 'id_kelompok_ta'])
             ->groupBy('id_kelompok_ta');
             // 4. Ambil data penguji TA dan kelompokkan berdasarkan kelompok TA
-            $datapengujiTAindividu = DataPengujiTa::get(['id', 'id_dosen', 'id_kelompok_ta'])
+            $datapengujiTAindividu = DataPengujiTa::
+            where('id_kategori_ta', $id)
+            ->get(['id', 'id_dosen', 'id_kelompok_ta'])
             ->groupBy('id_kelompok_ta')
             ->map(function ($items) use ($aspekpenilaianindividu) {
                 return $items->map(function ($item) use ($aspekpenilaianindividu) {
@@ -853,7 +879,9 @@ class AssessmentController extends Controller
                 
                 // Penilaian Kelompok ----------------------------------------------------------------------
                 // 1. ambil data penguji magang, dan kelompokkan berdasarkan Kelompok TA
-                $datapengujiTA = DataPengujiTa::where('id_dosen', $user->id)->get(['id', 'id_dosen', 'id_kelompok_ta'])
+                $datapengujiTA = DataPengujiTa::where('id_dosen', $user->id)
+                ->where('id_kategori_ta', $id)
+                ->get(['id', 'id_dosen', 'id_kelompok_ta'])
                 ->groupBy('id_kelompok_ta')
                 ->map(function ($items) { // $items adalah collection dari kelompok TA yang sama
                     return $items->map(function ($item) { // Iterasi tiap objek dalam kelompok
@@ -955,7 +983,9 @@ class AssessmentController extends Controller
                 $pesertaTA = PesertaTA::get(['id_mahasiswa', 'id_kelompok_ta'])
                 ->groupBy('id_kelompok_ta');
                 // 4. Ambil data penguji TA dan kelompokkan berdasarkan kelompok TA
-                $datapengujiTAindividu = DataPengujiTa::where('id_dosen', $user->id)->get(['id', 'id_dosen', 'id_kelompok_ta'])
+                $datapengujiTAindividu = DataPengujiTa::where('id_dosen', $user->id)
+                ->where('id_kategori_ta', $id)
+                ->get(['id', 'id_dosen', 'id_kelompok_ta'])
                 ->groupBy('id_kelompok_ta')
                 ->map(function ($items) use ($aspekpenilaianindividu) {
                     return $items->map(function ($item) use ($aspekpenilaianindividu) {
@@ -1251,38 +1281,62 @@ class AssessmentController extends Controller
     public function penilaianTAstoreGabungan(Request $request)
     {
         try {
+            $request->validate([
+                'data_penguji_ta' => 'required|integer',
+                'id_kelompok_ta' => 'required|integer',
+                'id_kategori_ta' => 'required|integer',
+            ]);
+
+            $idDosen = Auth::id();
+
+            // FILTER: pastikan data_penguji_ta ini benar milik dosen yang login
+            $datapenguji = DataPengujiTa::where('id', $request->data_penguji_ta)
+                ->where('id_dosen', $idDosen)
+                ->where('id_kelompok_ta', $request->id_kelompok_ta)
+                ->where('id_kategori_ta', $request->id_kategori_ta)
+                ->first();
+
+            
+
+            if (!$datapenguji) {
+                return redirect()->back()->with('error', 'Data penguji tidak valid atau bukan milik Anda.');
+            }
+
             // ========== PENILAIAN KELOMPOK ==========
             if ($request->has('penilaian_kelompok')) {
                 foreach ($request->penilaian_kelompok as $idAspekTA => $nilai) {
-                    penilaianTA::create([
-                        'id_data_pengujiTA' => $request->data_penguji_ta,
-                        'id_dosen' => $request->id_dosen,
-                        'id_kelompok_ta' => $request->id_kelompok_ta,
-                        'id_kategori_TA' => $request->id_kategori_ta,
-                        'id_aspekTA' => $idAspekTA,
-                        'nilai' => $nilai,
-                    ]);
+                    PenilaianTA::updateOrCreate(
+                        [
+                            'id_data_pengujiTA' => $request->data_penguji_ta,
+                            'id_aspekTA' => $idAspekTA,
+                        ],
+                        [
+                            'id_dosen' => $idDosen,
+                            'id_kelompok_ta' => $request->id_kelompok_ta,
+                            'id_kategori_TA' => $request->id_kategori_ta,
+                            'nilai' => $nilai,
+                        ]
+                    );
                 }
             }
 
             // ========== PENILAIAN INDIVIDU ==========
             if ($request->has('penilaian_individu')) {
-                $dataToInsert = [];
                 foreach ($request->penilaian_individu as $idMahasiswa => $aspekPenilaian) {
                     foreach ($aspekPenilaian as $idAspekTAIndividu => $nilai) {
-                        $dataToInsert[] = [
-                            'id_data_pengujiTA' => $request->data_penguji_ta,
-                            'id_aspekTA_individu' => $idAspekTAIndividu,
-                            'id_dosen' => $request->id_dosen,
-                            'id_kategori_TA' => $request->id_kategori_ta,
-                            'id_mahasiswa' => $idMahasiswa,
-                            'nilai' => $nilai,
-                        ];
+                        PenilaianTAindividu::updateOrCreate(
+                            [
+                                'id_data_pengujiTA' => $request->data_penguji_ta,
+                                'id_aspekTA_individu' => $idAspekTAIndividu,
+                                'id_mahasiswa' => $idMahasiswa,
+                            ],
+                            [
+                                'id_dosen' => $idDosen,
+                                'id_kategori_TA' => $request->id_kategori_ta,
+                                'nilai' => $nilai,
+                            ]
+                        );
                     }
-                }
-
-                if (!empty($dataToInsert)) {
-                    PenilaianTAindividu::insert($dataToInsert);
                 }
             }
 
@@ -1291,7 +1345,6 @@ class AssessmentController extends Controller
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
-
 
     public function penilaianmagangstore(Request $request)
     {
@@ -1369,43 +1422,42 @@ class AssessmentController extends Controller
     public function updateNilaiKelompok(Request $request, $id_penguji, $id_kategoriTA)
     {
         try {
-              $user =Auth::user();
-                    if (!$user) {
-                        abort(403, 'Profil Tidak Ditemukan');
-                    }     
-                    
-                // dd($request);
-               $request->validate([
-                    'nilai.*' => 'nullable|string',
-                ]);
+            $user = Auth::user();
+            if (!$user) {
+                abort(403, 'Profil Tidak Ditemukan');
+            }
 
-                foreach ($request->nilai as $id_aspek => $nilai) {
-                    // cari aspek supaya bisa ambil id_kategori_TA
-                    $aspek = AspekPenilaianTA::find($id_aspek);
+            $request->validate([
+                'nilai.*' => 'nullable|string',
+            ]);
 
-                    // cari penguji supaya bisa ambil id_dosen & id_kelompok_ta
-                    $penguji = DataPengujiTA::find($id_penguji);
+            foreach ($request->nilai as $id_aspek => $nilai) {
+                $aspek = AspekPenilaianTA::find($id_aspek);
+                $penguji = DataPengujiTa::find($id_penguji);
 
-                    PenilaianTA::updateOrCreate(
-                        [
-                            'id_data_pengujiTA' => $id_penguji,
-                            'id_aspekTA' => $id_aspek,
-                        ],
-                        [
-                            'nilai'          => $nilai,
-                            'id_kategori_TA' => $aspek ? $aspek->id_kategori_ta : null,
-                            'id_dosen'       => $penguji ? $penguji->id_dosen : null,
-                            'id_kelompok_ta' => $penguji ? $penguji->id_kelompok_ta : null,
-                        ]
-                    );
+                if (!$aspek || !$penguji) {
+                    return redirect()->back()->with('error', 'Data aspek atau penguji tidak ditemukan, gagal update.');
                 }
-                
-                
-                return redirect()->route('hasilpenilaianta', $id_kategoriTA)->with('success', 'Nilai berhasil diperbarui');
+
+                PenilaianTA::updateOrCreate(
+                    [
+                        'id_data_pengujiTA' => $id_penguji,
+                        'id_aspekTA' => $id_aspek,
+                    ],
+                    [
+                        'nilai'          => $nilai,
+                        'id_kategori_TA' => $aspek->id_kategori_ta,
+                        'id_dosen'       => $penguji->id_dosen,
+                        'id_kelompok_ta' => $penguji->id_kelompok_ta,
+                    ]
+                );
             }
+
+            return redirect()->route('hasilpenilaianta', $id_kategoriTA)->with('success', 'Nilai berhasil diperbarui');
+        }
         catch (\Exception $e) {
-                 return redirect()->back()->with('error', 'Data tidak ditemukan: ' . $e->getMessage());
-            }
+            return redirect()->back()->with('error', 'Data tidak ditemukan: ' . $e->getMessage());
+        }
     }
 
     public function editnilaitaIndividu($id_penguji, $id_kategoriTA, $id_dosen, $id_mahasiswa)
@@ -1467,13 +1519,23 @@ class AssessmentController extends Controller
     public function updateNilaiIndividu(Request $request, $id_penguji, $id_kategoriTA, $id_dosen, $id_mahasiswa)
     {
         try {
-            $user =Auth::user();
-                    if (!$user) {
-                        abort(403, 'Profil Tidak Ditemukan');
-                    }     
-            // Validasi nilai, karena di DB longText, kita boleh nullable dan string
+            $user = Auth::user();
+            if (!$user) {
+                abort(403, 'Profil Tidak Ditemukan');
+            }
+
+            // Pastikan kombinasi penguji+dosen+kategori benar-benar ada
+            $penguji = DataPengujiTa::where('id', $id_penguji)
+                ->where('id_dosen', $id_dosen)
+                ->where('id_kategori_ta', $id_kategoriTA)
+                ->first();
+
+            if (!$penguji) {
+                return redirect()->back()->with('error', 'Data penguji tidak valid, gagal update.');
+            }
+
             $request->validate([
-                'nilai.*' => ['nullable'], // deskripsi bisa teks, input numeric juga bisa string
+                'nilai.*' => ['nullable'],
             ]);
 
             foreach ($request->nilai as $id_aspek => $nilai) {
@@ -1491,7 +1553,6 @@ class AssessmentController extends Controller
                 );
             }
 
-            // Redirect ke halaman hasil penilaian per kategori TA
             return redirect()->route('hasilpenilaianta', ['id' => $id_kategoriTA])
                 ->with('success', 'Nilai berhasil diperbarui.');
 

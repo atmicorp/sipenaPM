@@ -333,11 +333,17 @@
                 <!-- =========================================
                     TOMBOL SUBMIT
                 ========================================== -->
+                @if ($hasilpenilaianTA->isEmpty() || empty($nilaiIndividu))
                 <div class="text-center mt-5">
                   <button type="submit" class="btn btn-primary px-4 py-2">
                     <i class="fas fa-paper-plane"></i> Submit Semua Penilaian
                   </button>
                 </div>
+                @else
+                <div class="alert alert-success text-center mt-5">
+                  <i class="fas fa-check-circle"></i> Penilaian kelompok dan individu untuk kategori ini sudah lengkap.
+                </div>
+                @endif
 
               </form>
             </div>
@@ -552,11 +558,17 @@
                 <!-- =========================================
                     TOMBOL SUBMIT
                 ========================================== -->
+                @if ($hasilpenilaianTA->isEmpty() || empty($nilaiIndividu))
                 <div class="text-center mt-5">
                   <button type="submit" class="btn btn-primary px-4 py-2">
                     <i class="fas fa-paper-plane"></i> Submit Semua Penilaian
                   </button>
                 </div>
+                @else
+                <div class="alert alert-success text-center mt-5">
+                  <i class="fas fa-check-circle"></i> Penilaian kelompok dan individu untuk kategori ini sudah lengkap.
+                </div>
+                @endif
 
               </form>
             </div>
@@ -638,4 +650,4 @@ document.addEventListener('wheel', function(e) {
 </script>
 
 @endsection
-@endsection
+

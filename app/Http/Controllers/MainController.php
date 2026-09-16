@@ -583,33 +583,40 @@ class MainController extends Controller
 
     public function uploadLaporanTA(Request $request)
     { 
-        // dd($request);
         try {
-             // Validasi file
-        $request->validate([
-            'file' => 'required|mimes:pdf|max:2048', // Maksimum 2MB
-            'id_kelompok_ta' => 'required|string',
-            'id_kategori_ta' => 'required|string',
-        ]);
+            $request->validate([
+                'file' => 'required|mimes:pdf|max:2048',
+                'id_kelompok_ta' => 'required|integer',
+                'id_kategori_ta' => 'required|integer',
+            ]);
 
-        $idkelompok= $request->id_kelompok_ta;
-        $idkategori= $request->id_kategori_ta;
+            $idkelompok = $request->id_kelompok_ta;
+            $idkategori = $request->id_kategori_ta;
 
-        $kelompokTA = KelompokTA::where('id',$idkelompok)->first();
-        $kategoriTA = KategoriTA::where('id',$idkategori)->first();
-        // Proses upload file
-        if ($request->hasFile('file')) {
-            $file = $request->file('file');
-            $fileName = 'LAPORAN' . '-' . $kelompokTA->nama_kelompok . '-' . $kategoriTA->nama_kategori . '.' . $file->getClientOriginalExtension();
-            // Simpan file ke folder "public"
-            $path = $file->storeAs('uploads/laporan', $fileName, 'public');
-            // Berikan response sukses
-            return redirect()->back()->with('success', 'Laporan berhasil diupload!')->with('file', $path);
-        }
+            // VERIFIKASI: pastikan mahasiswa yang login benar anggota kelompok ini
+            $isAnggota = PesertaTA::where('id_kelompok_ta', $idkelompok)
+                ->where('id_mahasiswa', Auth::id())
+                ->exists();
 
-        // Jika file tidak ditemukan
-        return redirect()->back()->with('error', 'Gagal mengupload file. Silakan coba lagi.');
+            if (!$isAnggota) {
+                return redirect()->back()->with('error', 'Anda bukan anggota kelompok ini, tidak dapat mengupload laporan.');
+            }
 
+            $kelompokTA = KelompokTA::where('id', $idkelompok)->first();
+            $kategoriTA = KategoriTA::where('id', $idkategori)->first();
+
+            if (!$kelompokTA || !$kategoriTA) {
+                return redirect()->back()->with('error', 'Data kelompok atau kategori tidak ditemukan.');
+            }
+
+            if ($request->hasFile('file')) {
+                $file = $request->file('file');
+                $fileName = 'LAPORAN' . '-' . $kelompokTA->nama_kelompok . '-' . $kategoriTA->nama_kategori . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('uploads/laporan', $fileName, 'public');
+                return redirect()->back()->with('success', 'Laporan berhasil diupload!')->with('file', $path);
+            }
+
+            return redirect()->back()->with('error', 'Gagal mengupload file. Silakan coba lagi.');
         }
         catch (\Exception $e) {
             return redirect()->back()->with('error', 'Dokumen gagal diupload: ' . $e->getMessage());
@@ -619,39 +626,46 @@ class MainController extends Controller
 
     public function uploadRevisiTA(Request $request)
     { 
-        // dd($request);
-        try {
-             // Validasi file
-        $request->validate([
-            'file' => 'required|mimes:pdf|max:2048', // Maksimum 2MB
-            'id_kelompok_ta' => 'required|string',
-            'id_kategori_ta' => 'required|string',
-            'id_dosen' => 'required|string',
-            'nama_dosen' => 'required|string',
+
+     $request->validate([
+            'file' => 'required|mimes:pdf|max:2048',
+            'id_kelompok_ta' => 'required|integer',
+            'id_kategori_ta' => 'required|integer',
         ]);
+        try {
+       
 
-        $idkelompok= $request->id_kelompok_ta;
-        $idkategori= $request->id_kategori_ta;
-        $iddosen= $request->id_dosen;
-        $namadosen= $request->nama_dosen;
+        $idkelompok = $request->id_kelompok_ta;
+        $idkategori = $request->id_kategori_ta;
+        $idDosen = Auth::id(); // <- ambil dari sesi login, bukan form
 
-        $kelompokTA = KelompokTA::where('id',$idkelompok)->first();
-        $kategoriTA = KategoriTA::where('id',$idkategori)->first();
+        // VERIFIKASI: pastikan dosen yang login benar penguji kelompok+kategori ini
+        $penguji = DataPengujiTa::where('id_kelompok_ta', $idkelompok)
+            ->where('id_kategori_ta', $idkategori)
+            ->where('id_dosen', $idDosen)
+            ->first();
 
-        // dd($kelompokTA);
-        // Proses upload file
+        if (!$penguji) {
+            return redirect()->back()->with('error', 'Anda bukan penguji untuk kelompok dan kategori ini.');
+        }
+
+        $kelompokTA = KelompokTA::where('id', $idkelompok)->first();
+        $kategoriTA = KategoriTA::where('id', $idkategori)->first();
+
+        if (!$kelompokTA || !$kategoriTA) {
+            return redirect()->back()->with('error', 'Data kelompok atau kategori tidak ditemukan.');
+        }
+
+        $namaDosen = Auth::user()->name; // <- ambil dari sesi login, bukan form
+
         if ($request->hasFile('file')) {
             $file = $request->file('file');
-            $fileName = $iddosen . '-' .'REV' . '-' . $kelompokTA->nama_kelompok . '-' . $kategoriTA->nama_kategori .  '-' . $namadosen . '.' . $file->getClientOriginalExtension();
-            // Simpan file ke folder "public"
+            $fileName = $idDosen . '-' . 'REV' . '-' . $kelompokTA->nama_kelompok . '-' . $kategoriTA->nama_kategori . '-' . $namaDosen . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('uploads/laporan', $fileName, 'public');
-            // Berikan response sukses
             return redirect()->back()->with('success', 'Laporan berhasil diupload!')->with('file', $path);
         }
 
-        // Jika file tidak ditemukan
         return redirect()->back()->with('error', 'Gagal mengupload file. Silakan coba lagi.');
-
         }
         catch (\Exception $e) {
             return redirect()->back()->with('error', 'Dokumen gagal diupload: ' . $e->getMessage());
@@ -671,7 +685,10 @@ class MainController extends Controller
             $pesertatamhs = PesertaTA::with('usermahasiswaTA')
             ->where('id_mahasiswa', $user->id)
             ->first();
-            $dosenta = DataPengujiTa::with('KelompokTA','userdosenTA','statusdosenTA')->where('id_kelompok_ta', $pesertatamhs->id_kelompok_ta)->get();
+            $dosenta = DataPengujiTa::with('KelompokTA','userdosenTA','statusdosenTA')
+                ->where('id_kelompok_ta', $pesertatamhs->id_kelompok_ta)
+                ->where('id_kategori_ta', $id)   // <-- tambahan ini
+                ->get();
            
 
             $jadwalta = JadwalTA::with(['kelompokTA','kategoriTA'])

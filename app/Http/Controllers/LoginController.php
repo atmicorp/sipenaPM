@@ -132,7 +132,9 @@ class LoginController extends Controller
             if ($pesertatamhs && $pesertatamhs->id_kelompok_ta) {
                 $dosenta = DataPengujiTa::with('KelompokTA', 'userdosenTA', 'statusdosenTA')
                     ->where('id_kelompok_ta', $pesertatamhs->id_kelompok_ta)
-                    ->get();
+                    ->get()
+                    ->unique('id_dosen')   // <-- tambahan ini, dedup berdasarkan id_dosen
+                    ->values();            // <-- reset index array setelah unique()
             }
 
             if (!$user) {

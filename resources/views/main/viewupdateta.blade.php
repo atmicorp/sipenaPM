@@ -37,7 +37,7 @@
         
             <div class="card card-default">
                 <div class="card-header">
-                    <h3 class="card-title">Edit Peserta TA</h3>
+                    <h3 class="card-title">Edit Peserta TA — {{ $kategoriTA->nama_kategori ?? '' }}</h3>
                     <div class="card-tools">
                         <button type="button" class="btn btn-tool" data-card-widget="collapse">
                             <i class="fas fa-minus"></i>
@@ -60,7 +60,7 @@
                         </div>
                     </div>
                 </div>         
-                <form method="POST" action="{{ route('pesertata.update', $kelompokTA->id) }}" enctype="multipart/form-data">
+                <form method="POST" action="{{ route('pesertata.update', ['id' => $kelompokTA->id, 'idKategoriTa' => $idKategoriTa]) }}" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                    
@@ -96,10 +96,18 @@
                                             </div>
                                         </td>
                                         <td>
-                                        <a href="{{ route('pesertata.destroy', ['id' => $pta->id]) }}"  onclick="return confirm('Apakah Anda yakin ingin menghapus ini?');"
-                                            class="btn btn-outline-danger btn-sm">
-                                                <i class="fas fa-trash-alt"></i>
-                                        </a>
+                                        {{-- Guard mahasiswa: dikunci total lintas kategori jika kelompok ini sudah punya penilaian --}}
+                                        @if($mahasiswaLocked)
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" disabled
+                                                    title="Tidak bisa dihapus, penilaian TA sudah dimulai">
+                                                <i class="fas fa-lock"></i>
+                                            </button>
+                                        @else
+                                            <a href="{{ route('pesertata.destroy', ['id' => $pta->id]) }}"  onclick="return confirm('Apakah Anda yakin ingin menghapus ini?');"
+                                                class="btn btn-outline-danger btn-sm">
+                                                    <i class="fas fa-trash-alt"></i>
+                                            </a>
+                                        @endif
                                         </td>
                                     </tr>
                                     @endforeach
@@ -107,6 +115,7 @@
                             </table>
 
                             <!-- Input Mahasiswa -->
+                            @if(!$mahasiswaLocked)
                             <div class="border p-3 rounded mb-3">
                                 <table class="table table-striped" id="positionsTablemhs">
                                     <thead>
@@ -139,6 +148,11 @@
                                     <i class="fas fa-plus"></i> Tambah Mahasiswa
                                 </button>
                             </div>
+                            @else
+                            <div class="alert alert-warning">
+                                Penilaian TA untuk kelompok ini sudah dimulai, data mahasiswa tidak dapat diubah.
+                            </div>
+                            @endif
                         </div>
 
                         <!-- Tabel Dosen -->
@@ -173,10 +187,18 @@
                                             </div>
                                         </td>
                                         <td>
-                                        <a href="{{ route('pengujita.destroy', ['id' => $pjta->id]) }}"  onclick="return confirm('Apakah Anda yakin ingin menghapus ini?');"
-                                            class="btn btn-outline-danger btn-sm">
-                                                <i class="fas fa-trash-alt"></i>
-                                        </a>
+                                        {{-- Guard dosen: dikunci hanya jika baris penguji ini (kategori yg sedang dibuka) sudah punya nilai --}}
+                                        @if($pjta->sudah_dinilai)
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" disabled
+                                                    title="Tidak bisa dihapus, dosen ini sudah melakukan penilaian">
+                                                <i class="fas fa-lock"></i>
+                                            </button>
+                                        @else
+                                            <a href="{{ route('pengujita.destroy', ['id' => $pjta->id]) }}"  onclick="return confirm('Apakah Anda yakin ingin menghapus ini?');"
+                                                class="btn btn-outline-danger btn-sm">
+                                                    <i class="fas fa-trash-alt"></i>
+                                            </a>
+                                        @endif
                                         </td>
                                     </tr>
                                     @endforeach
@@ -184,6 +206,8 @@
                             </table>
 
                             <!-- Input Dosen -->
+                            {{-- Guard dosen: form tambah dosen dikunci jika kategori yg sedang dibuka sudah ada penilaian --}}
+                            @if(!$sudahDinilai)
                             <div class="border p-3 rounded mb-3">
                                 <table class="table table-striped" id="positionsTable">
                                     <thead>
@@ -226,13 +250,20 @@
                                     <i class="fas fa-plus"></i> Tambah Dosen
                                 </button>
                             </div>
+                            @else
+                            <div class="alert alert-warning">
+                                Penilaian untuk kategori ini sudah berjalan, sehingga data dosen penguji tidak dapat diubah.
+                            </div>
+                            @endif
                         </div>
                     </div>
 
                     <!-- Tombol Submit -->
+                    @if(!$mahasiswaLocked || !$sudahDinilai)
                     <div class="text-left mt-3">
                         <button type="submit" class="btn btn-primary">Simpan Data</button>
                     </div>
+                    @endif
                 </form>
 
                 </div>
@@ -310,59 +341,65 @@
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     // **Tambah Mahasiswa**
-    document.getElementById("addRowmhs").addEventListener("click", function () {
-        const newRow = document.createElement("tr");
-        newRow.innerHTML = `
-            <td>
-                <select name="mahasiswa[]" class="form-control">
-                    <option value="" disabled selected>Mahasiswa</option>
-                      @foreach ($mahasiswa as $mhs)
-                        <option value="{{ $mhs->id }}">
-                        ({{ $mhs->details->nim }}) {{ $mhs->name }}
-                     </option>
-                     @endforeach
-                  </select>
-            </td>
-            <td>
-                <button type="button" class="btn btn-danger btn-sm delete-row">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        `;
-        document.getElementById("positionsBodymhs").appendChild(newRow);
-    });
+    const addRowMhsBtn = document.getElementById("addRowmhs");
+    if (addRowMhsBtn) {
+        addRowMhsBtn.addEventListener("click", function () {
+            const newRow = document.createElement("tr");
+            newRow.innerHTML = `
+                <td>
+                    <select name="mahasiswa[]" class="form-control">
+                        <option value="" disabled selected>Mahasiswa</option>
+                          @foreach ($mahasiswa as $mhs)
+                            <option value="{{ $mhs->id }}">
+                            ({{ $mhs->details->nim }}) {{ $mhs->name }}
+                         </option>
+                         @endforeach
+                      </select>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm delete-row">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            document.getElementById("positionsBodymhs").appendChild(newRow);
+        });
+    }
 
     // **Tambah Dosen**
-    document.getElementById("addRow").addEventListener("click", function () {
-        const newRow = document.createElement("tr");
-        newRow.innerHTML = `
-            <td>
-                <select name="dosen[]" class="form-control">
-                    <option value="" disabled selected>Pilih Dosen</option>
-                    @foreach ($dosen as $dsn)
-                    <option value="{{ $dsn->id }}">
-                        (NIDN : {{ $dsn->details->nidn }}) 
-                        {{ $dsn->details->gelar_depan }} {{ $dsn->name }}, {{ $dsn->details->gelar_belakang }}
-                    </option>
-                    @endforeach
-                </select>
-            </td>
-            <td>
-                <select name="statusdosen[]" class="form-control">
-                    <option value="" disabled selected>Pilih Status</option>
-                    @foreach ($statusdosen as $stats)
-                    <option value="{{ $stats->id }}">{{ $stats->status_dosen }}</option>
-                    @endforeach
-                </select>
-            </td>
-            <td>
-                <button type="button" class="btn btn-danger btn-sm delete-row">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        `;
-        document.getElementById("positionsBody").appendChild(newRow);
-    });
+    const addRowBtn = document.getElementById("addRow");
+    if (addRowBtn) {
+        addRowBtn.addEventListener("click", function () {
+            const newRow = document.createElement("tr");
+            newRow.innerHTML = `
+                <td>
+                    <select name="dosen[]" class="form-control">
+                        <option value="" disabled selected>Pilih Dosen</option>
+                        @foreach ($dosen as $dsn)
+                        <option value="{{ $dsn->id }}">
+                            (NIDN : {{ $dsn->details->nidn }}) 
+                            {{ $dsn->details->gelar_depan }} {{ $dsn->name }}, {{ $dsn->details->gelar_belakang }}
+                        </option>
+                        @endforeach
+                    </select>
+                </td>
+                <td>
+                    <select name="statusdosen[]" class="form-control">
+                        <option value="" disabled selected>Pilih Status</option>
+                        @foreach ($statusdosen as $stats)
+                        <option value="{{ $stats->id }}">{{ $stats->status_dosen }}</option>
+                        @endforeach
+                    </select>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm delete-row">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            document.getElementById("positionsBody").appendChild(newRow);
+        });
+    }
 
     // **Hapus Baris**
     document.addEventListener("click", function (event) {
@@ -376,6 +413,7 @@ document.addEventListener("DOMContentLoaded", function () {
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const form = document.querySelector('form'); // Ganti selector jika ada form lebih dari satu
+        if (!form) return;
 
         form.addEventListener('submit', function (e) {
             let isValid = true;
@@ -408,5 +446,3 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 @endsection
-
-

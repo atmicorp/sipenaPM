@@ -108,8 +108,8 @@ Route::prefix('manage')->middleware(['auth', 'role:Admin'])->group(function () {
     Route::get('manage-ta', [ManageController::class, 'manageTA'])->name('manageTA'); //penamaan route  
   
     Route::get('pesertata/{id}', [ManageController::class, 'destroypesertata'])->name('pesertata.destroy'); // DELETE
-    Route::get('vupdatepesertata/{id}', [ManageController::class, 'vpesertataupdate'])->name('vpesertata.update');
-    Route::put('updatepesertata/{id}', [ManageController::class, 'pesertataupdate'])->name('pesertata.update'); // Ganti POST ke PUT
+    Route::get('vupdatepesertata/{id}/{idKategoriTa}', [ManageController::class, 'vpesertataupdate'])->name('vpesertata.update');
+    Route::put('updatepesertata/{id}/{idKategoriTa}', [ManageController::class, 'pesertataupdate'])->name('pesertata.update');
     
     Route::put('updatedosenta/{id}', [ManageController::class, 'dosentaupdate'])->name('dosenta.update');
     Route::get('pengujita/{id}', [ManageController::class, 'destroypengujita'])->name('pengujita.destroy'); // DELETE

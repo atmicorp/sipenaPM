@@ -286,65 +286,7 @@ $(document).ready(function () {
 });
 </script>
 
-<script>
-      $(function () {
-      // Inisialisasi DataTables untuk tabel di "Approve"
-      let table1 = $("#example1").DataTable({
-          "responsive": true,
-          "lengthChange": false,
-          "autoWidth": false,
-          "buttons": [
-              {
-                  extend: 'excel',
-                  title: "Nilai Magang",
-              },
-              {
-                  extend: 'pdf',
-                  title: "Nilai Magang",
-              },
-          ]
-      });
 
-      table1.buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
-
-      // Inisialisasi DataTables untuk tabel di "Not Approve"
-      let table2 = $("#example2").DataTable({
-          "responsive": true,
-          "lengthChange": false,
-          "autoWidth": false,
-          "buttons": [
-              {
-                  extend: 'excel',
-                  title: "Nilai Rata-rata Magang",
-              },
-              {
-                  extend: 'pdf',
-                  title: "Nilai Rata-rata Magang",
-              },
-          ]
-      });
-
-      table2.buttons().container().appendTo('#example2_wrapper .col-md-6:eq(0)');
-
-      // **Fix Responsiveness saat Card di-collapse**
-      $('[data-card-widget="collapse"]').on('click', function () {
-          let $cardBody = $(this).closest('.card').find('.card-body');
-
-          setTimeout(function () {
-              if ($cardBody.is(':visible')) {
-                  // Perbaiki ukuran tabel saat card dibuka kembali
-                  table1.columns.adjust().responsive.recalc();
-                  table2.columns.adjust().responsive.recalc();
-              }
-          }, 300); // Tunggu animasi collapse selesai sebelum menyesuaikan ulang tabel
-      });
-
-      // Perbarui responsivitas tabel saat tab berubah
-      $('a[data-toggle="tab"]').on('shown.bs.tab', function () {
-          $.fn.dataTable.tables({visible: true, api: true}).columns.adjust().responsive.recalc();
-      });
-  });
-  </script>
 @endsection
 
   

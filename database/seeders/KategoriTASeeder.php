@@ -18,7 +18,7 @@ class KategoriTASeeder extends Seeder
             'nama_kategori' => 'Sidang Proposal',
         ]);
         KategoriTA::create([
-            'nama_kategori' => 'Sidang Seminar Hasil',
+            'nama_kategori' => 'Sidang Seminar Progres',
         ]);
         KategoriTA::create([
             'nama_kategori' => 'Sidang Pendadaran',

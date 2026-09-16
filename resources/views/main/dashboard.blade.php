@@ -276,25 +276,30 @@
 
                         <!-- Bagian Jadwal Presentasi -->
                         <div class="row">
-                          <div class="col-md-12">
-                           @if(isset($pesertatamhs))
-                            <form action="{{ route('judulta.update', ['id' => $pesertatamhs->id_kelompok_ta]) }}"
-                                      method="POST"
-                                      id="edittaForm">
-                            
-                                        @csrf
-                                        @method('PUT')
-                                        <input type="hidden" class="form-control" id="id_kel_ta" name="id_kel_ta" value="{{ $pesertatamhs->id_kelompok_ta }}" readonly>
-                                        <label for="namakel_ta-peserta " class="form-label mt-3">Judul TA</label>
-                                        <textarea name="judulta" class="form-control compose-textarea" style="height: 300px" required>
-                                            {{ $pesertatamhs->kelompokTA->judul_ta }}
-                                        </textarea>
-                                        <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
-                                    </form> @else
-<p>Data peserta tidak ditemukan, silakan login atau pilih peserta lain.</p>
-@endif
-                          </div>                  
-                        </div>
+  <div class="col-md-12">
+    @if(isset($pesertatamhs))
+      <label class="form-label mt-3">Judul TA :</label>
+      <p class="mb-4" style="font-size: 1.1rem;">
+        <strong>{!! $pesertatamhs->kelompokTA->judul_ta !!}</strong>
+      </p>
+
+      <form action="{{ route('judulta.update', ['id' => $pesertatamhs->id_kelompok_ta]) }}"
+            method="POST"
+            id="edittaForm">
+        @csrf
+        @method('PUT')
+        <input type="hidden" class="form-control" id="id_kel_ta" name="id_kel_ta" value="{{ $pesertatamhs->id_kelompok_ta }}" readonly>
+        <label for="namakel_ta-peserta" class="form-label mt-3">Edit Judul TA</label>
+        <textarea name="judulta" class="form-control compose-textarea" style="height: 300px" required>
+          {{ $pesertatamhs->kelompokTA->judul_ta }}
+        </textarea>
+        <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+      </form>
+    @else
+      <p>Data peserta tidak ditemukan, silakan login atau pilih peserta lain.</p>
+    @endif
+  </div>
+</div>
 
                         <hr class="my-4 border-top border-secondary">
                       

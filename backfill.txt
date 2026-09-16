@@ -1,0 +1,34 @@
+START TRANSACTION;
+
+UPDATE data_penguji_tas 
+SET id_kategori_ta = 1 
+WHERE id_kategori_ta IS NULL;
+
+INSERT INTO data_penguji_tas (id_dosen, id_kelompok_ta, id_kategori_ta, status_dosen, created_at, updated_at)
+SELECT id_dosen, id_kelompok_ta, 2, status_dosen, NOW(), NOW()
+FROM data_penguji_tas
+WHERE id_kategori_ta = 1;
+
+INSERT INTO data_penguji_tas (id_dosen, id_kelompok_ta, id_kategori_ta, status_dosen, created_at, updated_at)
+SELECT id_dosen, id_kelompok_ta, 3, status_dosen, NOW(), NOW()
+FROM data_penguji_tas
+WHERE id_kategori_ta = 1;
+
+UPDATE penilaian_t_a_s p
+JOIN data_penguji_tas lama ON lama.id = p.id_data_pengujiTA AND lama.id_kategori_ta = 1
+JOIN data_penguji_tas baru ON baru.id_dosen = lama.id_dosen 
+    AND baru.id_kelompok_ta = lama.id_kelompok_ta 
+    AND baru.id_kategori_ta = 2
+SET p.id_data_pengujiTA = baru.id
+WHERE p.id_kategori_TA = 2;
+
+UPDATE penilaian_t_aindividus p
+JOIN data_penguji_tas lama ON lama.id = p.id_data_pengujiTA AND lama.id_kategori_ta = 1
+JOIN data_penguji_tas baru ON baru.id_dosen = lama.id_dosen 
+    AND baru.id_kelompok_ta = lama.id_kelompok_ta 
+    AND baru.id_kategori_ta = 2
+SET p.id_data_pengujiTA = baru.id
+WHERE p.id_kategori_TA = 2;
+
+COMMIT;
+

@@ -84,12 +84,25 @@
                                 @endif
 
                                 <!-- Tombol Edit Peserta -->
-                                @if($kta)
-                                    <a href="{{ route('vpesertata.update', $kta->id) }}" 
-                                      class="btn btn-sm btn-success p-1 px-2 mt-2 mb-2">
-                                        <i class="fas fa-user-graduate"></i> Edit Peserta
-                                    </a>
-                                @endif
+                               <!-- Tombol Edit Peserta -->
+                               @if($kta)
+    <div class="dropdown mt-2 mb-2 d-inline-block">
+        <button class="btn btn-sm btn-success dropdown-toggle p-1 px-2" type="button" 
+                data-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-user-graduate"></i> Edit Peserta
+        </button>
+        <ul class="dropdown-menu">
+            @foreach($kategoriTA as $kat)
+                <li>
+                    <a class="dropdown-item" 
+                       href="{{ route('vpesertata.update', ['id' => $kta->id, 'idKategoriTa' => $kat->id]) }}">
+                        {{ $kat->nama_kategori }}
+                    </a>
+                </li>
+            @endforeach
+        </ul>
+    </div>
+@endif
 
                               <br> <!-- Baris baru untuk tambahan jarak -->
                           </td>

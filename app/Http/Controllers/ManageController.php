@@ -51,49 +51,70 @@ class ManageController extends Controller
         }   
     }
 
-    public function vpesertataupdate($id)
+    public function vpesertataupdate($id, $idKategoriTa)
     {
-       
         try {
             $user = Auth::user();
             if (!$user) {
                 abort(403, 'Profil Tidak Ditemukan');
             }
+
             $statusdosen = StatusDosen::where('status_dosen', '!=', 'Penguji')->get();
+
             $mahasiswa = User::role('Mahasiswa')
                 ->where(function ($query) {
-
-                    // 1️⃣ Tidak ada di tabel pesertaTA
                     $query->whereDoesntHave('pesertaTA')
-
-                        // ATAU
-
                         ->orWhereHas('pesertaTA', function ($q) {
                             $q->whereNull('id_kelompok_ta')
                                 ->orWhere('id_kelompok_ta', '');
                         });
-
                 })
                 ->get();
 
-            // dd($mahasiswa);
-
-            // dd($mahasiswa);
             $dosen = User::role('Dosen')->get();
-            $pesertaTA = PesertaTA::with('usermahasiswaTA')->where('id_kelompok_ta', $id)->get();
-            $pengujiTA = DataPengujiTa::with('userdosenTA','statusdosenTA')->where('id_kelompok_ta', $id)->get();
+
+            $pesertaTA = PesertaTA::with('usermahasiswaTA')
+                ->where('id_kelompok_ta', $id)
+                ->get();
+
+            $pengujiTA = DataPengujiTa::with('userdosenTA', 'statusdosenTA')
+                ->where('id_kelompok_ta', $id)
+                ->where('id_kategori_ta', $idKategoriTa)
+                ->get();
+
+            // Guard dosen: tandai per baris apakah sudah ada nilai (kategori yang sedang dibuka)
+            $pengujiTA->each(function ($item) {
+                $item->sudah_dinilai = PenilaianTA::where('id_data_pengujiTA', $item->id)->exists()
+                    || PenilaianTAindividu::where('id_data_pengujiTA', $item->id)->exists();
+            });
+
             $kelompokTA = KelompokTA::where('id', $id)->first();
-            // dd($pesertaTA);
-            
-            return view("main.viewupdateta", compact('pesertaTA','pengujiTA','kelompokTA','dosen','mahasiswa','statusdosen'));
+            $kategoriTA = KategoriTA::where('id', $idKategoriTa)->first();
+
+            // Guard dosen: level kategori yang sedang dibuka
+            $sudahDinilai = PenilaianTA::where('id_kelompok_ta', $id)
+                ->where('id_kategori_TA', $idKategoriTa)
+                ->exists()
+                ||
+                PenilaianTAindividu::whereIn('id_mahasiswa', $pesertaTA->pluck('id_mahasiswa'))
+                    ->where('id_kategori_TA', $idKategoriTa)
+                    ->exists();
+
+            // Guard mahasiswa: lintas SEMUA kategori untuk kelompok ini
+            $mahasiswaLocked = PenilaianTA::where('id_kelompok_ta', $id)->exists()
+                ||
+                PenilaianTAindividu::whereIn('id_mahasiswa', $pesertaTA->pluck('id_mahasiswa'))->exists();
+
+            return view("main.viewupdateta", compact(
+                'pesertaTA', 'pengujiTA', 'kelompokTA', 'dosen', 'mahasiswa',
+                'statusdosen', 'idKategoriTa', 'kategoriTA', 'sudahDinilai', 'mahasiswaLocked'
+            ));
         }
         catch (\Exception $e) {
             return redirect()->back()->with('error', 'Data tidak ditemukan');
-        }  
-
+        }
     }
-
-    public function storeusermanual(Request $request)
+        public function storeusermanual(Request $request)
     {
         try {
             $validatedData = $request->validate([
@@ -279,50 +300,65 @@ class ManageController extends Controller
 
     }
 
-    public function manageTA()
+   public function manageTA()
     {
         try {
             $user = Auth::user();
             if (!$user) {
                 abort(403, 'Profil Tidak Ditemukan');
             }
-            
-            $kelompokTA = KelompokTA::get();
-        
 
-            return view("main.viewmanageta", compact('kelompokTA'));
+            $kelompokTA = KelompokTA::get();
+            $kategoriTA = KategoriTA::orderBy('id')->get(); // ambil semua kategori (1,2,3)
+
+            return view("main.viewmanageta", compact('kelompokTA', 'kategoriTA'));
         }
         catch (\Exception $e) {
             return redirect()->back()->with('error', 'Data tidak ditemukan');
-        }   
-    }
-
-    public function destroypesertata($id)
-    {
-        try {
-            $peserta = PesertaTA::findOrFail($id);
-            $peserta->update(['id_kelompok_ta' => null]);
-         
-
-            return redirect()->back()->with('success', 'Peserta berhasil dihapus.');
         }
-        catch (\Exception $e) {
-                return redirect()->back()->with('error', 'Data tidak ditemukan');
-        } 
     }
 
-    public function destroypengujita($id)
-    {
-        try {
-            $penguji = DataPengujiTa::findOrFail($id);
-            $penguji->delete();
+        public function destroypesertata($id)
+        {
+            try {
+                $peserta = PesertaTA::findOrFail($id);
 
-            return redirect()->back()->with('success', 'Penguji berhasil dihapus.');
+                $terkunci = PenilaianTA::where('id_kelompok_ta', $peserta->id_kelompok_ta)->exists()
+                    || PenilaianTAindividu::where('id_mahasiswa', $peserta->id_mahasiswa)->exists();
+
+                if ($terkunci) {
+                    return redirect()->back()->with('error', 'Data mahasiswa tidak bisa dihapus karena penilaian TA sudah dimulai.');
+                }
+
+                $peserta->update(['id_kelompok_ta' => null]);
+
+                return redirect()->back()->with('success', 'Peserta berhasil dihapus.');
+            }
+            catch (\Exception $e) {
+                return redirect()->back()->with('error', 'Data tidak ditemukan');
+            }
         }
-        catch (\Exception $e) {
-                return redirect()->back()->with('error', 'Data tidak ditemukan');
-        } 
-    }
+
+        public function destroypengujita($id)
+        {
+            try {
+                $penguji = DataPengujiTa::findOrFail($id);
+
+                $sudahDinilai = PenilaianTA::where('id_data_pengujiTA', $penguji->id)->exists()
+                    || PenilaianTAindividu::where('id_data_pengujiTA', $penguji->id)->exists();
+
+                if ($sudahDinilai) {
+                    return redirect()->back()->with('error', 'Data penguji tidak bisa dihapus karena sudah dilakukan penilaian.');
+                }
+
+                $penguji->delete();
+
+                return redirect()->back()->with('success', 'Penguji berhasil dihapus.');
+            }
+            catch (\Exception $e) {
+                return redirect()->back()->with('error', 'Data tidak ditemukan: ' . $e->getMessage());
+            }
+        }
    
     public function dosentaupdate(Request $request)
     {
@@ -412,9 +448,8 @@ class ManageController extends Controller
        
     }
 
-    public function pesertataupdate(Request $request, $id)
+   public function pesertataupdate(Request $request, $id, $idKategoriTa)
     {
-        // dd($request);
         try {
             // Validasi input (tanpa error jika null)
             $validatedData = $request->validate([
@@ -423,19 +458,44 @@ class ManageController extends Controller
                 'statusdosen' => 'nullable|array',
             ]);
 
-            // Ambil data mahasiswa dan dosen, jika tidak ada, buat array kosong
             $mahasiswa = $validatedData['mahasiswa'] ?? [];
             $dosen = $validatedData['dosen'] ?? [];
             $statusDosen = $validatedData['statusdosen'] ?? [];
 
-            // Hanya proses mahasiswa jika ada data
+            // ================= GUARD MAHASISWA (lintas semua kategori) =================
+            $mahasiswaLocked = PenilaianTA::where('id_kelompok_ta', $id)->exists()
+                ||
+                PenilaianTAindividu::whereIn(
+                    'id_mahasiswa',
+                    PesertaTA::where('id_kelompok_ta', $id)->pluck('id_mahasiswa')
+                )->exists();
+
+            if (!empty($mahasiswa) && $mahasiswaLocked) {
+                return redirect()->back()->with('error', 'Tidak bisa menambah mahasiswa, penilaian TA untuk kelompok ini sudah dimulai.');
+            }
+
+            // ================= GUARD DOSEN (khusus kategori yang sedang dibuka) =================
+            $sudahDinilai = PenilaianTA::where('id_kelompok_ta', $id)
+                ->where('id_kategori_TA', $idKategoriTa)
+                ->exists()
+                ||
+                PenilaianTAindividu::whereIn(
+                    'id_mahasiswa',
+                    PesertaTA::where('id_kelompok_ta', $id)->pluck('id_mahasiswa')
+                )
+                    ->where('id_kategori_TA', $idKategoriTa)
+                    ->exists();
+
+            if (!empty($dosen) && $sudahDinilai) {
+                return redirect()->back()->with('error', 'Tidak bisa menambah dosen, penilaian untuk kategori ini sudah dilakukan.');
+            }
+
+            // ================= PROSES MAHASISWA =================
             if (!empty($mahasiswa)) {
-                // Cek duplikasi mahasiswa
                 if (count($mahasiswa) !== count(array_unique($mahasiswa))) {
                     return redirect()->back()->with('error', 'Duplikasi Nama Mahasiswa, Silahkan Ulangi !');
                 }
 
-                // Cek apakah ada mahasiswa yang sudah masuk kelompok lain
                 $existingPeserta = PesertaTA::whereIn('id_mahasiswa', $mahasiswa)
                     ->whereNotNull('id_kelompok_ta')
                     ->get();
@@ -446,41 +506,37 @@ class ManageController extends Controller
                     return redirect()->back()->with('error', "$namaMahasiswa sudah masuk dalam kelompok $namakelompok, Silahkan Ulangi!");
                 }
 
-                // Update id_kelompok_ta untuk mahasiswa yang ada
                 foreach ($mahasiswa as $mhsId) {
                     PesertaTA::updateOrCreate(
-                        [
-                            'id_mahasiswa' => $mhsId
-                        ],
-                        [
-                            'id_kelompok_ta' => $id
-                        ]
+                        ['id_mahasiswa' => $mhsId],
+                        ['id_kelompok_ta' => $id]
                     );
                 }
             }
 
-            // Hanya proses dosen jika ada data
+            // ================= PROSES DOSEN =================
             if (!empty($dosen) && !empty($statusDosen)) {
-                // Cek duplikasi dosen
                 if (count($dosen) !== count(array_unique($dosen))) {
                     return redirect()->back()->with('error', 'Duplikasi Nama Dosen, Silahkan Ulangi !');
                 }
 
                 foreach ($dosen as $key => $dosenId) {
-                    // Cek apakah dosen sudah terdaftar
+                    // Cek duplikasi HARUS termasuk id_kategori_ta,
+                    // supaya dosen yang sama boleh jadi penguji di kategori lain
                     $existingPenguji = DataPengujiTa::where('id_dosen', $dosenId)
                         ->where('id_kelompok_ta', $id)
+                        ->where('id_kategori_ta', $idKategoriTa)
                         ->exists();
 
                     if ($existingPenguji) {
-                        return redirect()->back()->with('error', 'Data Dosen Sudah Terdaftar');
+                        return redirect()->back()->with('error', 'Data Dosen Sudah Terdaftar di kategori ini');
                     }
 
-                    // Tambahkan dosen penguji jika ada
                     DataPengujiTa::create([
                         'id_dosen' => (int) $dosenId,
-                        'status_dosen' => (int) ($statusDosen[$key] ?? 0), // Gunakan 0 jika status kosong
+                        'status_dosen' => (int) ($statusDosen[$key] ?? 0),
                         'id_kelompok_ta' => $id,
+                        'id_kategori_ta' => $idKategoriTa, // fix: sebelumnya tidak diisi (NULL)
                     ]);
                 }
             }

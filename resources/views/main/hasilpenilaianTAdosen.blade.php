@@ -58,38 +58,41 @@
                 </div>
               </div>
               <div class="card-body">
-                <table id="example1" class="table table-bordered table-striped">
-                  <thead>
-                    <tr>
-                      <th class="uppercase">NO</th>
-                    
-                      <th class="uppercase">Mahasiswa</th>
-                      @foreach ($datapengujiByMahasiswa->flatten(1)->first() as $key => $value)
-                          @if($key !== 'id_penguji' && $key !== 'id_mahasiswa' && $key !== 'id_kelompok_ta' && $key !== 'id_dosen' && $key !== 'nama_dosen' && $key !== 'id_kelompok_ta' && $key !== 'kelompok_ta' && $key !== 'nama_mahasiswa' && $key !== 'dosen' )
-                              <th class="uppercase">{{ $key }}</th> <!-- Kolom dinamis dari array -->
-                          @endif
-                      @endforeach
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @php $counter = 1; @endphp <!-- Inisialisasi ulang counter -->
-                    @foreach ($datapengujiByMahasiswa as $pengujiGroup)
-                        @foreach ($pengujiGroup as $item)
-                            <tr>
-                                <td>{{ $counter++ }}</td>
-                          
-                                <td>{{ $item['nama_mahasiswa'] }}</td>
-
-                                @foreach ($item as $key => $value)
-                                @if($key !== 'id_penguji' && $key !== 'id_mahasiswa' && $key !== 'id_kelompok_ta' && $key !== 'id_dosen' && $key !== 'nama_dosen' && $key !== 'id_kelompok_ta' && $key !== 'kelompok_ta' && $key !== 'nama_mahasiswa' && $key !== 'dosen' )
-                                        <td>{!! $value ?? 'N/A' !!}</td> 
-                                    @endif
-                                @endforeach
-                            </tr>
+                @if ($datapengujiByMahasiswa->isEmpty())
+                  <div class="alert alert-info">
+                    Anda belum menjadi penguji untuk kategori {{ $kategoriTA->nama_kategori }}, atau belum ada penilaian yang tersimpan.
+                  </div>
+                @else
+                  <table id="example1" class="table table-bordered table-striped">
+                    <thead>
+                      <tr>
+                        <th class="uppercase">NO</th>
+                        <th class="uppercase">Mahasiswa</th>
+                        @foreach ($datapengujiByMahasiswa->flatten(1)->first() as $key => $value)
+                            @if($key !== 'id_penguji' && $key !== 'id_mahasiswa' && $key !== 'id_kelompok_ta' && $key !== 'id_dosen' && $key !== 'nama_dosen' && $key !== 'kelompok_ta' && $key !== 'nama_mahasiswa' && $key !== 'dosen' )
+                                <th class="uppercase">{{ $key }}</th>
+                            @endif
                         @endforeach
-                    @endforeach
-                  </tbody>
-                </table>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @php $counter = 1; @endphp
+                      @foreach ($datapengujiByMahasiswa as $pengujiGroup)
+                          @foreach ($pengujiGroup as $item)
+                              <tr>
+                                  <td>{{ $counter++ }}</td>
+                                  <td>{{ $item['nama_mahasiswa'] }}</td>
+                                  @foreach ($item as $key => $value)
+                                  @if($key !== 'id_penguji' && $key !== 'id_mahasiswa' && $key !== 'id_kelompok_ta' && $key !== 'id_dosen' && $key !== 'nama_dosen' && $key !== 'kelompok_ta' && $key !== 'nama_mahasiswa' && $key !== 'dosen' )
+                                          <td>{!! $value ?? 'N/A' !!}</td>
+                                      @endif
+                                  @endforeach
+                              </tr>
+                          @endforeach
+                      @endforeach
+                    </tbody>
+                  </table>
+                @endif
               </div>   
             </div>
           </div>
