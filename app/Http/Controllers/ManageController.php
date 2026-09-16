@@ -93,6 +93,14 @@ class ManageController extends Controller
             $kelompokTA = KelompokTA::where('id', $id)->first();
             $kategoriTA = KategoriTA::where('id', $idKategoriTa)->first();
 
+            if (!$kelompokTA) {
+                return redirect()->route('manageTA')->with('error', 'Kelompok TA tidak ditemukan');
+            }
+
+            if (!$kategoriTA) {
+                return redirect()->route('manageTA')->with('error', 'Kategori TA tidak ditemukan');
+            }
+
             // Guard dosen: level kategori yang sedang dibuka
             $sudahDinilai = PenilaianTA::where('id_kelompok_ta', $id)
                 ->where('id_kategori_TA', $idKategoriTa)
@@ -124,10 +132,6 @@ class ManageController extends Controller
         ]);
         return redirect()->back()->with('error', $e->getMessage()); // sementara tampilkan pesan asl
         }
-        
-
-        
-
         
     }
         public function storeusermanual(Request $request)
