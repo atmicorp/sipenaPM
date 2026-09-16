@@ -151,7 +151,7 @@
             </a>
           </li>
 
-          @hasanyrole('Dosen|Admin')
+          @hasanyrole('Dosen')
 
           <li class="nav-header">FORM PENILAIAN MAGANG</li>
           <li class="nav-item {{ request()->routeIs('penilaianmagang') || request()->routeIs('hasilpenilaianmaganguntukdosen') || request()->routeIs('aspekpenilaiansp') ? 'menu-open' : '' }}">
