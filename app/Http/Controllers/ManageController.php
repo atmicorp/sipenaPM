@@ -125,12 +125,11 @@ class ManageController extends Controller
         // }
 
         catch (\Exception $e) {
-          
-        Log::error('vpesertataupdate error: ' . $e->getMessage(), [
-        'line' => $e->getLine(),
-        'file' => $e->getFile(),
-        ]);
-        return redirect()->back()->with('error', $e->getMessage()); // sementara tampilkan pesan asl
+            Log::error('vpesertataupdate error: ' . $e->getMessage(), [
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ]);
+            return redirect()->back()->with('error', 'Data tidak ditemukan');
         }
         
     }

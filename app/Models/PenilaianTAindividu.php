@@ -14,7 +14,7 @@ class PenilaianTAindividu extends Model
 
     public function aspekpenilaianTAindividu()
     {
-        return $this->belongsTo(aspekpenilaianTAindividu::class, 'id_aspekTAindividu');  
+        return $this->belongsTo(AspekPenilaianTAIndividu::class, 'id_aspekTA_individu');  
     }
 
     public function pengujiTAindividu()

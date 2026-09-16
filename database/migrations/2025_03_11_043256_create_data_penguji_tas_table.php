@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('id_dosen')->constrained('users')->onDelete('cascade'); // Foreign key ke tabel users 
             $table->foreignId('id_kelompok_ta')->constrained('kelompok_t_a_s')->onDelete('cascade'); // Foreign key ke tabel users
+            $table->foreignId('id_kategori_ta')->nullable()->constrained('kategori_t_a_s')->onDelete('cascade'); // Foreign key ke tabel kategori_t_a_s
             $table->foreignId('status_dosen')->constrained('status_dosens')->onDelete('cascade'); // Foreign key ke tabel users 
             $table->timestamps();
         });
