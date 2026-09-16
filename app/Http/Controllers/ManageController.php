@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 
 class ManageController extends Controller
@@ -53,6 +54,7 @@ class ManageController extends Controller
 
     public function vpesertataupdate($id, $idKategoriTa)
     {
+        // dd("sss");
         try {
             $user = Auth::user();
             if (!$user) {
@@ -110,9 +112,23 @@ class ManageController extends Controller
                 'statusdosen', 'idKategoriTa', 'kategoriTA', 'sudahDinilai', 'mahasiswaLocked'
             ));
         }
+        // catch (\Exception $e) {
+        //     return redirect()->back()->with('error', 'Data tidak ditemukan');
+        // }
+
         catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Data tidak ditemukan');
+          
+        Log::error('vpesertataupdate error: ' . $e->getMessage(), [
+        'line' => $e->getLine(),
+        'file' => $e->getFile(),
+        ]);
+        return redirect()->back()->with('error', $e->getMessage()); // sementara tampilkan pesan asl
         }
+        
+
+        
+
+        
     }
         public function storeusermanual(Request $request)
     {
