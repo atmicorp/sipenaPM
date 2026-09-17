@@ -58,19 +58,11 @@
         </div>
         <!-- /.card-header -->
         <div class="card-body">
-          
-
-        <form action="{{ route('users.import') }}" method="POST" enctype="multipart/form-data">
-            @csrf
-            <div class="form-group">
-              <label for="file">Upload File Excel</label>
-              <div class="custom-file">
-                <input type="file" name="file" class="custom-file-input" id="file" accept=".xlsx, .xls, .csv" required>
-                <label class="custom-file-label" for="file">Choose file</label>
-              </div>
-            </div>
-            <button type="submit" class="btn btn-primary">Upload</button>
-          </form>
+          <p class="text-muted">
+            Untuk mengisi data awal Mahasiswa/Perusahaan/Peserta Magang lewat Excel di awal
+            periode, gunakan menu <strong>Konfigurasi Magang &rarr; Import Peserta Magang</strong>.
+            Halaman ini khusus untuk menambah/mengelola user satu per satu.
+          </p>
           <div class="modal fade" id="modalTambahUser" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
               <div class="modal-content">

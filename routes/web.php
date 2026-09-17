@@ -6,7 +6,7 @@ use App\Http\Controllers\MainController;
 use App\Http\Controllers\ManageController;
 use App\Http\Controllers\UserImportController;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\PesertaMagangImportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -104,6 +104,14 @@ Route::prefix('manage')->middleware(['auth', 'role:Admin'])->group(function () {
     Route::post('delete-penilaian-magang', [ManageController::class, 'deletePenilaian'])->name('deletepenilaianmagang');
     Route::post('change-password/{id}', [ManageController::class, 'changePassword'])->name('change.password');
 
+
+        // Import Peserta Magang (data awal per periode magang): upload -> preview -> simpan/batal
+    Route::get('import-peserta-magang', [PesertaMagangImportController::class, 'create'])->name('importpesertamagang');
+    Route::post('import-peserta-magang/preview', [PesertaMagangImportController::class, 'preview'])->name('importpesertamagang.preview');
+    Route::post('import-peserta-magang/simpan', [PesertaMagangImportController::class, 'store'])->name('importpesertamagang.store');
+    Route::post('import-peserta-magang/batal', [PesertaMagangImportController::class, 'cancel'])->name('importpesertamagang.cancel');
+    Route::get('import-peserta-magang/template', [PesertaMagangImportController::class, 'downloadTemplate'])->name('importpesertamagang.template');
+
     // manageTA
     Route::get('manage-ta', [ManageController::class, 'manageTA'])->name('manageTA'); //penamaan route  
   
@@ -141,7 +149,7 @@ Route::prefix('manage')->middleware(['auth', 'role:Admin'])->group(function () {
     Route::get('edit-user/{id}', [ManageController::class, 'edituser'])->name('edituser'); //penamaan route  
     Route::post('update-user/{id}', [ManageController::class, 'updateuser'])->name('update.user');
     Route::post(' uploadphotoeditadmin/{id}', [ManageController::class, 'uploadphotoeditadmin'])->name('uploadphotoeditadmin'); //penamaan route
-    Route::post('/import', [UserImportController::class, 'import'])->name('users.import');
+    // Route::post('/import', [UserImportController::class, 'import'])->name('users.import');
 
     Route::post('tambah-user-manual', [ManageController::class, 'storeusermanual'])->name('storeusermanual');
     

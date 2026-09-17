@@ -252,9 +252,8 @@
           @role('Admin')
 
           
-          <li class="nav-header"><strong>MANAGE DATA MAGANG</strong></li>
-            <li class="nav-item  {{ request()->routeIs('penempatanmagang') || request()->routeIs('viewpenempatanmagang') || request()->routeIs('setupdatamagang') || request()->routeIs('aspekpenilaian')  || request()->routeIs('resetpenilaianmagang') || request()->routeIs('hasilpenilaianmagang')? 'menu-open' : '' }} ">
-              <a href="#" class="nav-link {{ request()->routeIs('penempatanmagang') || request()->routeIs('viewpenempatanmagang') || request()->routeIs('setupdatamagang') ||request()->routeIs('aspekpenilaian') ||request()->routeIs('hasilpenilaianmagang') || request()->routeIs('resetpenilaianmagang') ? 'active' : '' }}">
+            <li class="nav-item  {{ request()->routeIs('penempatanmagang') || request()->routeIs('viewpenempatanmagang') || request()->routeIs('setupdatamagang') || request()->routeIs('aspekpenilaian')  || request()->routeIs('resetpenilaianmagang') || request()->routeIs('hasilpenilaianmagang') || request()->routeIs('importpesertamagang*')? 'menu-open' : '' }} ">
+              <a href="#" class="nav-link {{ request()->routeIs('penempatanmagang') || request()->routeIs('viewpenempatanmagang') || request()->routeIs('setupdatamagang') ||request()->routeIs('aspekpenilaian') ||request()->routeIs('hasilpenilaianmagang') || request()->routeIs('resetpenilaianmagang') || request()->routeIs('importpesertamagang*') ? 'active' : '' }}">
               <i class="nav-icon fas fa-network-wired"></i>
                 <p>
                 Konfigurasi Magang
@@ -263,12 +262,12 @@
                 </p>
               </a>
             <ul class="nav nav-treeview">
-              <!-- <li class="nav-item">
-              <a href="{{ route('penempatanmagang') }}" class="nav-link {{ request()->routeIs('penempatanmagang') ? 'active' : '' }}">
+              <li class="nav-item">
+                <a href="{{ route('importpesertamagang') }}" class="nav-link {{ request()->routeIs('importpesertamagang*') ? 'active' : '' }}">
                   <i class="far fa-circle nav-icon"></i>
-                  <p>Tambah Peserta Magang</p>
+                  <p>Import Peserta Magang</p>
                 </a>
-              </li> -->
+              </li>
               <li class="nav-item">
                 <a href="{{route('viewpenempatanmagang')}}" class="nav-link {{ request()->routeIs('viewpenempatanmagang') ? 'active' : '' }}">
                   <i class="far fa-circle nav-icon"></i>
