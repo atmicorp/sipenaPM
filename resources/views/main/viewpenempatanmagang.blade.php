@@ -40,6 +40,9 @@
           <h3 class="card-title">Penempatan (Magang)</h3>
 
           <div class="card-tools">
+            <a href="{{ route('penempatanmagang') }}" class="btn btn-success btn-sm mr-2">
+              <i class="fas fa-plus"></i> Tambah Data Penempatan
+            </a>
             <button type="button" class="btn btn-tool" data-card-widget="collapse">
               <i class="fas fa-minus"></i>
             </button>

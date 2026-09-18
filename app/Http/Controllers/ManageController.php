@@ -797,56 +797,56 @@ class ManageController extends Controller
         }  
     }
 
-    // public function storepenempatanmagang(Request $request)
-    // {
-    //     try {
-    //         $validatedData = $request->validate([
-    //             'peserta' => 'required|array',
-    //             'perusahaan' => 'required|array',
-    //             'tanggal_presentasi' => 'required|array',
-    //             'jam_presentasi' => 'required|array',
-    //         ]);
-        
-    //         // Pastikan jumlah elemen dalam array cocok
-    //         if (count($validatedData['peserta']) !== count($validatedData['perusahaan']) || 
-    //             count($validatedData['peserta']) !== count($validatedData['tanggal_presentasi'])) {
-    //             return redirect()->back()->with('error', 'Jumlah data peserta, perusahaan, dan tanggal presentasi tidak sesuai.');
-    //         }
-        
-    //         // Cek apakah ada ID peserta yang duplikat
-    //         if (count($validatedData['peserta']) !== count(array_unique($validatedData['peserta']))) {
-    //             return redirect()->back()->with('error', 'Duplikasi ID Mahasiswa, Silahkan Ulangi!');
-    //         }
-        
-    //         foreach ($validatedData['peserta'] as $key => $pesertaId) {
-    //             // Cek data mahasiswa pada tabel
-    //             $existingPeserta = PesertaMagang::where('id_mahasiswa', $pesertaId)->first();
-        
-    //             // Jika sudah terdaftar, kembalikan dengan error
-    //             if ($existingPeserta) {
-    //                 return redirect()->back()->with('error', "Mahasiswa dengan ID {$pesertaId} sudah terdaftar.");
-    //             }
-        
-    //             // Pastikan indeks yang diakses ada di array lainnya
-    //             if (!isset($validatedData['perusahaan'][$key]) || !isset($validatedData['tanggal_presentasi'][$key])) {
-    //                 return redirect()->back()->with('error', 'Data tidak lengkap untuk peserta ID: ' . $pesertaId);
-    //             }
-        
-    //             // Menyimpan pasangan peserta dan perusahaan
-    //             PesertaMagang::create([
-    //                 'id_mahasiswa' => (int)$pesertaId,
-    //                 'id_perusahaan' => (int)$validatedData['perusahaan'][$key],
-    //                 'tanggal_presentasi' => (string)$validatedData['tanggal_presentasi'][$key],
-    //                 'jam_presentasi' => (string)$validatedData['jam_presentasi'][$key],
-    //             ]);
-    //         }
-    //         return redirect()->route('viewpenempatanmagang')->with('success', 'Data Berhasil Ditambahkan');
-           
-    //     }
-    //     catch (\Exception $e) {
-    //         return redirect()->back()->with('error', 'Data Gagal Ditambahkan'  . $e->getMessage());
-    //     }
-    // }
+    public function storepenempatanmagang(Request $request)
+    {
+        try {
+            $validatedData = $request->validate([
+                'peserta' => 'required|array',
+                'perusahaan' => 'required|array',
+                'tanggal_presentasi' => 'required|array',
+                'jam_presentasi' => 'required|array',
+                'jam_presentasi_selesai' => 'nullable|array',
+                'lokasi' => 'nullable|array',
+            ]);
+
+            // Pastikan jumlah elemen dalam array cocok
+            if (count($validatedData['peserta']) !== count($validatedData['perusahaan']) ||
+                count($validatedData['peserta']) !== count($validatedData['tanggal_presentasi'])) {
+                return redirect()->back()->with('error', 'Jumlah data peserta, perusahaan, dan tanggal presentasi tidak sesuai.');
+            }
+
+            // Cek apakah ada ID peserta yang duplikat dalam satu submit
+            if (count($validatedData['peserta']) !== count(array_unique($validatedData['peserta']))) {
+                return redirect()->back()->with('error', 'Duplikasi ID Mahasiswa, Silahkan Ulangi!');
+            }
+
+            foreach ($validatedData['peserta'] as $key => $pesertaId) {
+                // Cek apakah mahasiswa ini sudah punya data penempatan magang
+                $existingPeserta = PesertaMagang::where('id_mahasiswa', $pesertaId)->first();
+                if ($existingPeserta) {
+                    return redirect()->back()->with('error', "Mahasiswa dengan ID {$pesertaId} sudah terdaftar.");
+                }
+
+                // Pastikan indeks yang diakses ada di array lainnya
+                if (!isset($validatedData['perusahaan'][$key]) || !isset($validatedData['tanggal_presentasi'][$key])) {
+                    return redirect()->back()->with('error', 'Data tidak lengkap untuk peserta ID: ' . $pesertaId);
+                }
+
+                PesertaMagang::create([
+                    'id_mahasiswa' => (int) $pesertaId,
+                    'id_perusahaan' => (int) $validatedData['perusahaan'][$key],
+                    'tanggal_presentasi' => (string) $validatedData['tanggal_presentasi'][$key],
+                    'jam_presentasi' => (string) $validatedData['jam_presentasi'][$key],
+                    'jam_presentasi_selesai' => $validatedData['jam_presentasi_selesai'][$key] ?? null,
+                    'lokasi' => $validatedData['lokasi'][$key] ?? null,
+                ]);
+            }
+
+            return redirect()->route('viewpenempatanmagang')->with('success', 'Data Berhasil Ditambahkan');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Data Gagal Ditambahkan: ' . $e->getMessage());
+        }
+    }
 
     public function storedatapembimbing(Request $request)
     {
@@ -1380,6 +1380,30 @@ class ManageController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Gagal menambahkan kelompok TA: ' . $e->getMessage());
+        }
+    }
+
+
+    public function storeperusahaanmagang(Request $request)
+    {
+        try {
+            $validatedData = $request->validate([
+                'nama' => ['required', 'string', 'max:255', \Illuminate\Validation\Rule::unique(DataPerusahaanMagang::class, 'nama')],
+                'alamat' => 'nullable|string',
+            ], [
+                'nama.unique' => 'Nama perusahaan ini sudah ada di database.',
+            ]);
+
+            DataPerusahaanMagang::create([
+                'nama' => $validatedData['nama'],
+                'alamat' => $validatedData['alamat'] ?? null,
+            ]);
+
+            return redirect()->back()->with('success', 'Perusahaan baru berhasil ditambahkan, silakan pilih di dropdown.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menambahkan perusahaan: ' . $e->getMessage());
         }
     }
 }

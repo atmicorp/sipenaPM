@@ -92,6 +92,7 @@ Route::prefix('manage')->middleware(['auth', 'role:Admin'])->group(function () {
     Route::get('penempatan-praktik-kerja', [ManageController::class, 'penempatanmagang'])->name('penempatanmagang'); //penamaan route  
     Route::get('view-penempatan', [ManageController::class, 'viewpenempatanmagang'])->name('viewpenempatanmagang'); //penamaan route  
     Route::post('tambah-data-penempatan-praktik-kerja', [ManageController::class, 'storepenempatanmagang'])->name('storepenempatanmagang'); //penamaan route  
+    Route::post('tambah-perusahaan-magang', [ManageController::class, 'storeperusahaanmagang'])->name('storeperusahaanmagang');
     Route::put('update-peserta/{id}', [ManageController::class, 'pesertaupdate'])->name('pesertaupdate'); //penamaan route  
     Route::get('setupdatamagang/{id}', [ManageController::class, 'setupdatamagang'])->name('setupdatamagang'); //penamaan route  
     Route::get('aspekpenilaian', [ManageController::class, 'aspekpenilaian'])->name('aspekpenilaian'); //penamaan route  
