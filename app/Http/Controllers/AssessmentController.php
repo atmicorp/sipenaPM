@@ -157,8 +157,12 @@ class AssessmentController extends Controller
             ]);
 
             $idkelTA = $request->id_kelompok_ta;
-            $idkatTA = $request->id_kategori_ta + 1;
             $idkatTAnow = $request->id_kategori_ta;
+
+            $kategoriSekarang = KategoriTA::find($idkatTAnow);
+            if (!$kategoriSekarang) {
+                return redirect()->back()->with('error', 'Kategori TA tidak ditemukan.');
+            }
 
             // VERIFIKASI: pastikan yang login adalah Ketua Penguji (status_dosen == 3) untuk kelompok+kategori ini
             $penguji = DataPengujiTa::where('id_kelompok_ta', $idkelTA)
@@ -171,9 +175,12 @@ class AssessmentController extends Controller
                 return redirect()->back()->with('error', 'Hanya Ketua Penguji yang dapat melakukan aksi ini.');
             }
 
-            $cek = VerifikasiKelompokTA::where('id_kelompok_ta', $idkelTA)
-                ->orderBy('id_kategori_ta')
-                ->get();
+            // Urutkan berdasarkan urutan kategori (bukan id mentah)
+            $cek = VerifikasiKelompokTA::with('kategoriTA')
+                ->where('id_kelompok_ta', $idkelTA)
+                ->get()
+                ->sortBy(fn ($item) => $item->kategoriTA->urutan ?? PHP_INT_MAX)
+                ->values();
 
             if ($cek->isEmpty()) {
                 return redirect()->back()->with('error', 'Data verifikasi kelompok tidak ditemukan.');
@@ -186,17 +193,26 @@ class AssessmentController extends Controller
                     ->where('id_kategori_ta', $idkatTAnow)
                     ->update(['status' => '4']);
                 return redirect()->back()->with('success', 'Silahkan Lakukan Penilaian');
-            } else {
-                VerifikasiKelompokTA::where('id_kelompok_ta', $idkelTA)
-                    ->where('id_kategori_ta', $idkatTA)
-                    ->update(['status' => '1']);
-
-                VerifikasiKelompokTA::where('id_kelompok_ta', $idkelTA)
-                    ->where('id_kategori_ta', $idkatTAnow)
-                    ->update(['status' => '2']);
-
-                return redirect()->back()->with('success', 'Silahkan Lakukan Penilaian');
             }
+
+            // Cari kategori dengan urutan berikutnya (bukan id + 1)
+            $kategoriBerikutnya = KategoriTA::where('urutan', '>', $kategoriSekarang->urutan)
+                ->orderBy('urutan')
+                ->first();
+
+            if (!$kategoriBerikutnya) {
+                return redirect()->back()->with('error', 'Kategori tahap berikutnya tidak ditemukan.');
+            }
+
+            VerifikasiKelompokTA::where('id_kelompok_ta', $idkelTA)
+                ->where('id_kategori_ta', $kategoriBerikutnya->id)
+                ->update(['status' => '1']);
+
+            VerifikasiKelompokTA::where('id_kelompok_ta', $idkelTA)
+                ->where('id_kategori_ta', $idkatTAnow)
+                ->update(['status' => '2']);
+
+            return redirect()->back()->with('success', 'Silahkan Lakukan Penilaian');
         }
         catch (\Exception $e) {
             return redirect()->back()->with('error', 'Data tidak ditemukan');
@@ -220,11 +236,17 @@ class AssessmentController extends Controller
             $validasiTA = VerifikasiKelompokTA::where('id_kelompok_ta', $datapenguji->id_kelompok_ta)
                 ->select('id_kelompok_ta', 'id_kategori_ta', 'status')
                 ->get();
-            $nextkategori = $idKategoriTA +1;
-            $statusnext = VerifikasiKelompokTA::where('id_kelompok_ta', $datapenguji->id_kelompok_ta)
-            ->where('id_kategori_ta', $nextkategori)
-            ->select('id_kelompok_ta', 'id_kategori_ta', 'status')
-            ->first();
+            $kategoriSekarangObj = KategoriTA::find($idKategoriTA);
+            $kategoriBerikutnyaObj = $kategoriSekarangObj
+                ? KategoriTA::where('urutan', '>', $kategoriSekarangObj->urutan)->orderBy('urutan')->first()
+                : null;
+
+            $statusnext = $kategoriBerikutnyaObj
+                ? VerifikasiKelompokTA::where('id_kelompok_ta', $datapenguji->id_kelompok_ta)
+                    ->where('id_kategori_ta', $kategoriBerikutnyaObj->id)
+                    ->select('id_kelompok_ta', 'id_kategori_ta', 'status')
+                    ->first()
+                : null;
 
             $statusnow = VerifikasiKelompokTA::where('id_kelompok_ta', $datapenguji->id_kelompok_ta)
             ->where('id_kategori_ta', $idKategoriTA)

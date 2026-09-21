@@ -1406,4 +1406,124 @@ class ManageController extends Controller
             return redirect()->back()->with('error', 'Gagal menambahkan perusahaan: ' . $e->getMessage());
         }
     }
+
+    public function kategoriTA()
+    {
+        $kategoriTA = KategoriTA::orderBy('urutan')->get()->map(function ($k) {
+            $k->dipakai = JadwalTA::where('id_kategori_ta', $k->id)->exists()
+                || AspekPenilaianTA::where('id_kategori_ta', $k->id)->exists()
+                || AspekPenilaianTAIndividu::where('id_kategori_ta', $k->id)->exists()
+                || VerifikasiKelompokTA::where('id_kategori_ta', $k->id)->exists()
+                || PenilaianTA::where('id_kategori_ta', $k->id)->exists()
+                || PenilaianTAindividu::where('id_kategori_ta', $k->id)->exists();
+            return $k;
+        });
+
+        return view('main.kategoriTA', compact('kategoriTA'));
+    }
+
+     public function storeKategoriTA(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'nama_kategori' => 'required|string|max:255',
+                'urutan' => 'required|integer|min:1',
+            ]);
+
+            DB::beginTransaction();
+
+            $kategori = KategoriTA::create($validated);
+
+            // Daftarkan kategori baru ini ke semua Kelompok TA yang sudah ada,
+            // supaya tidak ada kelompok lama yang "ketinggalan" tanpa jadwal/status
+            // untuk kategori baru ini.
+            $kelompokList = KelompokTA::pluck('id');
+
+            foreach ($kelompokList as $kelompokId) {
+                JadwalTA::firstOrCreate([
+                    'id_kelompok_ta' => $kelompokId,
+                    'id_kategori_ta' => $kategori->id,
+                ], [
+                    'tanggal_presentasi' => null,
+                    'jam_presentasi' => null,
+                    'jam_presentasi_selesai' => null,
+                    'lokasi' => null,
+                ]);
+
+                VerifikasiKelompokTA::firstOrCreate([
+                    'id_kelompok_ta' => $kelompokId,
+                    'id_kategori_ta' => $kategori->id,
+                ], [
+                    'status' => '0',
+                ]);
+            }
+
+            DB::commit();
+
+            return redirect()->route('kategorita.index')->with('success', 'Kategori TA berhasil ditambahkan, dan otomatis didaftarkan ke ' . count($kelompokList) . ' kelompok TA yang sudah ada.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Gagal menambahkan kategori: ' . $e->getMessage());
+        }
+    }
+
+       public function updateKategoriTA(Request $request, $id)
+    {
+        try {
+            $kategori = KategoriTA::findOrFail($id);
+
+            $dipakai = JadwalTA::where('id_kategori_ta', $id)->exists()
+                || AspekPenilaianTA::where('id_kategori_ta', $id)->exists()
+                || AspekPenilaianTAIndividu::where('id_kategori_ta', $id)->exists()
+                || VerifikasiKelompokTA::where('id_kategori_ta', $id)->exists()
+                || PenilaianTA::where('id_kategori_ta', $id)->exists()
+                || PenilaianTAindividu::where('id_kategori_ta', $id)->exists();
+
+            if ($dipakai) {
+                $validated = $request->validate([
+                    'nama_kategori' => 'required|string|max:255',
+                ]);
+                $kategori->update(['nama_kategori' => $validated['nama_kategori']]);
+            } else {
+                $validated = $request->validate([
+                    'nama_kategori' => 'required|string|max:255',
+                    'urutan' => 'required|integer|min:1',
+                ]);
+                $kategori->update($validated);
+            }
+
+            return redirect()->route('kategorita.index')->with('success', 'Kategori TA berhasil diperbarui.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal memperbarui kategori: ' . $e->getMessage());
+        }
+    }
+
+    public function destroyKategoriTA($id)
+    {
+        try {
+            $kategori = KategoriTA::findOrFail($id);
+
+            $dipakai = JadwalTA::where('id_kategori_ta', $id)->exists()
+                || AspekPenilaianTA::where('id_kategori_ta', $id)->exists()
+                || AspekPenilaianTAIndividu::where('id_kategori_ta', $id)->exists()
+                || VerifikasiKelompokTA::where('id_kategori_ta', $id)->exists()
+                || PenilaianTA::where('id_kategori_ta', $id)->exists()
+                || PenilaianTAindividu::where('id_kategori_ta', $id)->exists();
+
+            if ($dipakai) {
+                return redirect()->back()->with('error', 'Kategori ini tidak bisa dihapus karena sudah dipakai di data jadwal/aspek/nilai yang sudah ada.');
+            }
+
+            $kategori->delete();
+
+            return redirect()->route('kategorita.index')->with('success', 'Kategori TA berhasil dihapus.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menghapus kategori: ' . $e->getMessage());
+        }
+    }
 }

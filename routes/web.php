@@ -122,6 +122,11 @@ Route::prefix('manage')->middleware(['auth', 'role:Admin'])->group(function () {
     
     Route::put('updatedosenta/{id}', [ManageController::class, 'dosentaupdate'])->name('dosenta.update');
     Route::get('pengujita/{id}', [ManageController::class, 'destroypengujita'])->name('pengujita.destroy'); // DELETE
+
+    Route::get('kategori-ta', [ManageController::class, 'kategoriTA'])->name('kategorita.index');
+    Route::post('kategori-ta', [ManageController::class, 'storeKategoriTA'])->name('kategorita.store');
+    Route::put('kategori-ta/{id}', [ManageController::class, 'updateKategoriTA'])->name('kategorita.update');
+    Route::delete('kategori-ta/{id}', [ManageController::class, 'destroyKategoriTA'])->name('kategorita.destroy');
     
     Route::put('kelompokta/{id}', [ManageController::class, 'kelompoktaupdate'])->name('kelompokta.update');
     Route::put('editkelompokta/{id}', [ManageController::class, 'updatekta'])->name('kta.update');

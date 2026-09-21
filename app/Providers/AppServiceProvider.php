@@ -20,5 +20,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         //
+        \Illuminate\Support\Facades\View::composer('master.layoutsmaster', function ($view) {
+            $view->with('kategoriTA', \App\Models\KategoriTA::orderBy('urutan')->get());
+        });
     }
 }

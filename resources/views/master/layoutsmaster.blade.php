@@ -179,79 +179,33 @@
 
           <li class="nav-header">FORM PENILAIAN TA</li>
 
-                <!-- Sidang Proposal -->
-                <li class="nav-item {{ request()->routeIs('penilaianTA', 'hasilpenilaianTAuntukdosen') && request()->route('id') == 1 ? 'menu-open' : '' }}">
-                    <a href="#" class="nav-link {{ request()->routeIs('penilaianTA', 'hasilpenilaianTAuntukdosen') && request()->route('id') == 1 ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-file-alt"></i>
-                        <p>Sidang Proposal</p>
-                        <i class="fas fa-angle-left right"></i>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('penilaianTA', ['id' => 1]) }}" class="nav-link {{ request()->routeIs('penilaianTA') && request()->route('id') == 1 ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Penilaian</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('hasilpenilaianTAuntukdosen', ['id' => 1]) }}" class="nav-link {{ request()->routeIs('hasilpenilaianTAuntukdosen') && request()->route('id') == 1 ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Hasil Penilaian</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-                <!-- Sidang Seminar Hasil -->
-                <li class="nav-item {{ request()->routeIs('penilaianTA', 'hasilpenilaianTAuntukdosen') && request()->route('id') == 2 ? 'menu-open' : '' }}">
-                    <a href="#" class="nav-link {{ request()->routeIs('penilaianTA', 'hasilpenilaianTAuntukdosen') && request()->route('id') == 2 ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-chart-bar"></i>
-                        <p>Sidang Seminar Proges</p>
-                        <i class="fas fa-angle-left right"></i>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('penilaianTA', ['id' => 2]) }}" class="nav-link {{ request()->routeIs('penilaianTA') && request()->route('id') == 2 ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Penilaian</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('hasilpenilaianTAuntukdosen', ['id' => 2]) }}" class="nav-link {{ request()->routeIs('hasilpenilaianTAuntukdosen') && request()->route('id') == 2 ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Hasil Penilaian</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-                <!-- Sidang Pendadaran -->
-                <li class="nav-item {{ request()->routeIs('penilaianTA', 'hasilpenilaianTAuntukdosen') && request()->route('id') == 3 ? 'menu-open' : '' }}">
-                    <a href="#" class="nav-link {{ request()->routeIs('penilaianTA', 'hasilpenilaianTAuntukdosen') && request()->route('id') == 3 ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-chalkboard-teacher"></i>
-                        <p>Sidang Pendadaran</p>
-                        <i class="fas fa-angle-left right"></i>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('penilaianTA', ['id' => 3]) }}" class="nav-link {{ request()->routeIs('penilaianTA') && request()->route('id') == 3 ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Penilaian</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('hasilpenilaianTAuntukdosen', ['id' => 3]) }}" class="nav-link {{ request()->routeIs('hasilpenilaianTAuntukdosen') && request()->route('id') == 3 ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Hasil Penilaian</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
+          @foreach ($kategoriTA as $kategori)
+          <li class="nav-item {{ (request()->routeIs('penilaianTA', 'hasilpenilaianTAuntukdosen') && request()->route('id') == $kategori->id) ? 'menu-open' : '' }}">
+              <a href="#" class="nav-link {{ (request()->routeIs('penilaianTA', 'hasilpenilaianTAuntukdosen') && request()->route('id') == $kategori->id) ? 'active' : '' }}">
+                  <i class="nav-icon fas fa-file-alt"></i>
+                  <p>{{ $kategori->nama_kategori }}</p>
+                  <i class="fas fa-angle-left right"></i>
+              </a>
+              <ul class="nav nav-treeview">
+                  <li class="nav-item">
+                      <a href="{{ route('penilaianTA', ['id' => $kategori->id]) }}" class="nav-link {{ request()->routeIs('penilaianTA') && request()->route('id') == $kategori->id ? 'active' : '' }}">
+                          <i class="far fa-circle nav-icon"></i>
+                          <p>Penilaian</p>
+                      </a>
+                  </li>
+                  <li class="nav-item">
+                      <a href="{{ route('hasilpenilaianTAuntukdosen', ['id' => $kategori->id]) }}" class="nav-link {{ request()->routeIs('hasilpenilaianTAuntukdosen') && request()->route('id') == $kategori->id ? 'active' : '' }}">
+                          <i class="far fa-circle nav-icon"></i>
+                          <p>Hasil Penilaian</p>
+                      </a>
+                  </li>
+              </ul>
+          </li>
+          @endforeach
           @endhasanyrole
 
           @role('Admin')
-
-          
+            <li class="nav-header"><strong>MANAGE MAGANG</strong></li>
             <li class="nav-item  {{ request()->routeIs('penempatanmagang') || request()->routeIs('viewpenempatanmagang') || request()->routeIs('setupdatamagang') || request()->routeIs('aspekpenilaian')  || request()->routeIs('resetpenilaianmagang') || request()->routeIs('hasilpenilaianmagang') || request()->routeIs('importpesertamagang*')? 'menu-open' : '' }} ">
               <a href="#" class="nav-link {{ request()->routeIs('penempatanmagang') || request()->routeIs('viewpenempatanmagang') || request()->routeIs('setupdatamagang') ||request()->routeIs('aspekpenilaian') ||request()->routeIs('hasilpenilaianmagang') || request()->routeIs('resetpenilaianmagang') || request()->routeIs('importpesertamagang*') ? 'active' : '' }}">
               <i class="nav-icon fas fa-network-wired"></i>
@@ -291,8 +245,8 @@
 
 
           <li class="nav-header"><strong>MANAGE TUGAS AKHIR</strong></li>
-          <li class="nav-item {{ request()->routeIs('manageTA', 'kelompokta.create') ? 'menu-open' : '' }}">
-              <a href="#" class="nav-link {{ request()->routeIs('manageTA', 'kelompokta.create') ? 'active' : '' }}">
+            <li class="nav-item {{ request()->routeIs('manageTA', 'kelompokta.create', 'kategorita.index') ? 'menu-open' : '' }}">
+              <a href="#" class="nav-link {{ request()->routeIs('manageTA', 'kelompokta.create', 'kategorita.index') ? 'active' : '' }}">
                   <i class="nav-icon fas fa-tasks"></i>
                   <p>
                       Konfigurasi TA
@@ -312,8 +266,14 @@
                           <p>Edit Kelompok TA</p>
                       </a>
                   </li>
+                  <li class="nav-item">
+                      <a href="{{ route('kategorita.index') }}" class="nav-link {{ request()->routeIs('kategorita.index') ? 'active' : '' }}">
+                          <i class="far fa-circle nav-icon"></i>
+                          <p>Kelola Kategori TA</p>
+                      </a>
+                  </li>
               </ul>
-          </li>
+            </li>
           <li class="nav-item">
             <a href="{{route('aspekpenilaianindividu')}}" class="nav-link {{ request()->routeIs('aspekpenilaianindividu') ? 'active' : '' }}">
               <i class="nav-icon  fas fa-clipboard-list"></i>
@@ -324,15 +284,16 @@
           </li>
 
           <!-- --------- -->
-          <li class="nav-item {{ request()->routeIs('setupjadwalta', 'aspekpenilaianta', 'hasilpenilaianta') && request()->route('id') == 1 ? 'menu-open' : '' }}">
-              <a href="#" class="nav-link {{ request()->routeIs('setupjadwalta', 'aspekpenilaianta', 'hasilpenilaianta') && request()->route('id') == 1 ? 'active' : '' }}">
+          @foreach ($kategoriTA as $kategori)
+          <li class="nav-item {{ request()->routeIs('setupjadwalta', 'aspekpenilaianta', 'hasilpenilaianta') && request()->route('id') == $kategori->id ? 'menu-open' : '' }}">
+              <a href="#" class="nav-link {{ request()->routeIs('setupjadwalta', 'aspekpenilaianta', 'hasilpenilaianta') && request()->route('id') == $kategori->id ? 'active' : '' }}">
                   <i class="nav-icon fas fa-file-alt"></i>
-                  <p>Sidang Proposal</p>
+                  <p>{{ $kategori->nama_kategori }}</p>
                   <i class="fas fa-angle-left right"></i>
               </a>
               <ul class="nav nav-treeview">
                   <li class="nav-item">
-                      <a href="{{ route('setupjadwalta', ['id' => 1]) }}" class="nav-link {{ request()->routeIs('setupjadwalta') && request()->route('id') == 1 ? 'active' : '' }}">
+                      <a href="{{ route('setupjadwalta', ['id' => $kategori->id]) }}" class="nav-link {{ request()->routeIs('setupjadwalta') && request()->route('id') == $kategori->id ? 'active' : '' }}">
                           <i class="far fa-circle nav-icon"></i>
                           <p>Jadwal Presentasi</p>
                       </a>
@@ -340,7 +301,7 @@
               </ul>
               <ul class="nav nav-treeview">
                   <li class="nav-item">
-                      <a href="{{ route('aspekpenilaianta', ['id' => 1]) }}" class="nav-link {{ request()->routeIs('aspekpenilaianta') && request()->route('id') == 1 ? 'active' : '' }}">
+                      <a href="{{ route('aspekpenilaianta', ['id' => $kategori->id]) }}" class="nav-link {{ request()->routeIs('aspekpenilaianta') && request()->route('id') == $kategori->id ? 'active' : '' }}">
                           <i class="far fa-circle nav-icon"></i>
                           <p>Aspek Penilaian</p>
                       </a>
@@ -348,78 +309,14 @@
               </ul>
               <ul class="nav nav-treeview">
                   <li class="nav-item">
-                      <a href="{{ route('hasilpenilaianta', ['id' => 1]) }}" class="nav-link {{ request()->routeIs('hasilpenilaianta') && request()->route('id') == 1 ? 'active' : '' }}">
+                      <a href="{{ route('hasilpenilaianta', ['id' => $kategori->id]) }}" class="nav-link {{ request()->routeIs('hasilpenilaianta') && request()->route('id') == $kategori->id ? 'active' : '' }}">
                           <i class="far fa-circle nav-icon"></i>
                           <p>Hasil Penilaian</p>
                       </a>
                   </li>
               </ul>
-              
           </li>
-
-        <li class="nav-item {{ request()->routeIs('setupjadwalta', 'aspekpenilaianta', 'hasilpenilaianta') && request()->route('id') == 2 ? 'menu-open' : '' }}">
-            <a href="#" class="nav-link {{ request()->routeIs('setupjadwalta', 'aspekpenilaianta', 'hasilpenilaianta') && request()->route('id') == 2 ? 'active' : '' }}">
-                <i class="nav-icon fas fa-chart-bar"></i>
-                <p>Sidang Seminar Progres</p>
-                <i class="fas fa-angle-left right"></i>
-            </a>
-            <ul class="nav nav-treeview">
-                <li class="nav-item">
-                    <a href="{{ route('setupjadwalta', ['id' => 2]) }}" class="nav-link {{ request()->routeIs('setupjadwalta') && request()->route('id') == 2 ? 'active' : '' }}">
-                        <i class="far fa-circle nav-icon"></i>
-                        <p>Jadwal Presentasi</p>
-                    </a>
-                </li>
-            </ul>
-            <ul class="nav nav-treeview">
-                <li class="nav-item">
-                    <a href="{{ route('aspekpenilaianta', ['id' => 2]) }}" class="nav-link {{ request()->routeIs('aspekpenilaianta') && request()->route('id') == 2 ? 'active' : '' }}">
-                        <i class="far fa-circle nav-icon"></i>
-                        <p>Aspek Penilaian</p>
-                    </a>
-                </li>
-            </ul>
-            <ul class="nav nav-treeview">
-                  <li class="nav-item">
-                      <a href="{{ route('hasilpenilaianta', ['id' => 2]) }}" class="nav-link {{ request()->routeIs('hasilpenilaianta') && request()->route('id') == 2 ? 'active' : '' }}">
-                          <i class="far fa-circle nav-icon"></i>
-                          <p>Hasil Penilaian</p>
-                      </a>
-                  </li>
-              </ul>
-        </li>
-
-        <li class="nav-item {{ request()->routeIs('setupjadwalta', 'aspekpenilaianta', 'hasilpenilaianta') && request()->route('id') == 3 ? 'menu-open' : '' }}">
-            <a href="#" class="nav-link {{ request()->routeIs('setupjadwalta', 'aspekpenilaianta', 'hasilpenilaianta') && request()->route('id') == 3 ? 'active' : '' }}">
-                <i class="nav-icon fas fa-chalkboard-teacher"></i>
-                <p>Sidang Pendadaran</p>
-                <i class="fas fa-angle-left right"></i>
-            </a>
-            <ul class="nav nav-treeview">
-                <li class="nav-item">
-                    <a href="{{ route('setupjadwalta', ['id' => 3]) }}" class="nav-link {{ request()->routeIs('setupjadwalta') && request()->route('id') == 3 ? 'active' : '' }}">
-                        <i class="far fa-circle nav-icon"></i>
-                        <p>Jadwal Presentasi</p>
-                    </a>
-                </li>
-            </ul>
-            <ul class="nav nav-treeview">
-                <li class="nav-item">
-                    <a href="{{ route('aspekpenilaianta', ['id' => 3]) }}" class="nav-link {{ request()->routeIs('aspekpenilaianta') && request()->route('id') == 3 ? 'active' : '' }}">
-                        <i class="far fa-circle nav-icon"></i>
-                        <p>Aspek Penilaian</p>
-                    </a>
-                </li>
-            </ul>
-            <ul class="nav nav-treeview">
-                  <li class="nav-item">
-                      <a href="{{ route('hasilpenilaianta', ['id' => 3]) }}" class="nav-link {{ request()->routeIs('hasilpenilaianta') && request()->route('id') == 3 ? 'active' : '' }}">
-                          <i class="far fa-circle nav-icon"></i>
-                          <p>Hasil Penilaian</p>
-                      </a>
-                  </li>
-              </ul>
-        </li>
+          @endforeach
 
           <!-- ------------- -->
 
