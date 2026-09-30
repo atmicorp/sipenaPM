@@ -262,7 +262,9 @@ class MainController extends Controller
             $peserta = PesertaTA::with('usermahasiswaTA')->where('id_kelompok_ta', $id_kelompok_ta)->get();
             // dd($peserta);
 
-            $penguji= DataPengujiTa::with(['statusdosenTA','userdosenTA'])->where('id_kelompok_ta', $id_kelompok_ta)->get();
+            // ambil daftar dosen penguji, tapi hanya untuk kelompok ini dan sidang ini
+            $penguji= DataPengujiTa::with(['statusdosenTA','userdosenTA'])->where('id_kelompok_ta', $id_kelompok_ta)->where('id_kategori_ta', $id_kategori_ta)->get();
+            
             // dd($penguji);
 
             return view("main.beritaacara", compact('kategori','kelompok','jadwalta','peserta','penguji'));
@@ -368,7 +370,8 @@ class MainController extends Controller
         // dd($finalData);
 
         $datadifaldata = array_column($finalData, 'id_penguji');
-        $datapenguji = DataPengujiTa::where('id_kelompok_ta', $id_kelompok_ta->id_kelompok_ta)->pluck('id')->toArray();
+        
+        $datapenguji = DataPengujiTa::where('id_kelompok_ta', $id_kelompok_ta->id_kelompok_ta)->where('id_kategori_ta', $id)->pluck('id')->toArray();
         // dd($datapenguji);
 
 
@@ -377,6 +380,7 @@ class MainController extends Controller
 
         $namaDosen = DataPengujiTa::with('userdosenTA')
             ->where('id_kelompok_ta', $id_kelompok_ta->id_kelompok_ta)
+            ->where('id_kategori_ta', $id)
             ->whereIn('id', $diff2)
             ->get()
             ->pluck('userdosenTA.name')

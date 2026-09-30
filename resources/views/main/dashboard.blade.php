@@ -532,7 +532,7 @@
                           </tr>
                       </thead>
                       <tbody>
-                      @foreach($pengujita as $pta)   
+                      @foreach($pengujita->unique('id_kelompok_ta') as $pta)   
                           <tr>
                               <td>{{$loop->iteration}}</td>
                               <td>{{$pta->KelompokTA->nama_kelompok}}</td>
