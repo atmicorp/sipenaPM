@@ -6,6 +6,7 @@ use App\Http\Controllers\MainController;
 use App\Http\Controllers\ManageController;
 use App\Http\Controllers\UserImportController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\PesertaMagangImportController;
 
 /*
@@ -27,18 +28,29 @@ use App\Http\Controllers\PesertaMagangImportController;
 
 Route::prefix('auth')->middleware('guest')->group(function () {
     Route::get('login', [LoginController::class, 'index'])->name('login');
-    Route::post('login', [LoginController::class, 'authenticate'])->name('loginprocess');
+    Route::post('login', fn () => abort(404))->name('loginprocess');
     Route::get('google', [LoginController::class, 'redirectToGoogle']);
     Route::get('google/callback', [LoginController::class, 'handleGoogleCallback']);
 });
 
 Route::redirect('/', '/auth/login'); //akan otomatis diarahkan ke halaman login (/auth/login)
 
+
+// ===== PINDAHAN: login manual, sekarang di LUAR grup 'main' =====
+if (config('login.manual_aktif') && config('login.manual_path')) {
+    Route::prefix(config('login.manual_path'))->middleware('guest')->group(function () {
+        Route::get('/', [LoginController::class, 'manualIndex'])->name('login.manual');
+        Route::post('/', [LoginController::class, 'manualAuthenticate'])->name('login.manual.process');
+    });
+}
+// =================================================================
+
+
 Route::prefix('main')->middleware(['auth'])->group(function () {
     Route::get('dashboard', [LoginController::class, 'dashboard'])->name('dashboard'); //penamaan route
     Route::get('myprofile', [MainController::class, 'myprofile'])->name('myprofile'); //penamaan route
-    Route::post('uploadphoto', [MainController::class, 'uploadphoto'])->name('uploadphoto'); //penamaan route
-     Route::get('dokumenmagang', [MainController::class, 'dokumenmagang'])->name('dokumenmagang'); //penamaan route
+    Route::post('uploadphoto', [MainController::class, 'uploadphoto'])->name('uploadphoto')->middleware('audit');
+    Route::get('dokumenmagang', [MainController::class, 'dokumenmagang'])->name('dokumenmagang'); //penamaan route
    
 });
 
@@ -87,7 +99,7 @@ Route::prefix('assessment')->middleware(['auth', 'role:Dosen'])->group(function 
 });
 
 
-Route::prefix('manage')->middleware(['auth', 'role:Admin'])->group(function () {
+Route::prefix('manage')->middleware(['auth', 'audit', 'role:Admin'])->group(function () {
     // manageMAgang
     Route::get('penempatan-praktik-kerja', [ManageController::class, 'penempatanmagang'])->name('penempatanmagang'); //penamaan route  
     Route::get('view-penempatan', [ManageController::class, 'viewpenempatanmagang'])->name('viewpenempatanmagang'); //penamaan route  
@@ -162,6 +174,9 @@ Route::prefix('manage')->middleware(['auth', 'role:Admin'])->group(function () {
     //reset data
     Route::post('reset-database', [ManageController::class, 'resetDatabase'])->name('reset.database');
     Route::get('reset-data', [ManageController::class, 'viewresetdatabase'])->name('reset.view');
+
+    // log aktivitas (hanya baca)
+    Route::get('log-aktivitas', [AuditLogController::class, 'index'])->name('logaktivitas');
 
     // adminedit nilai
     Route::get('edit-nilai-ta-kelompok/{id_penguji}/{id_kategoriTA}', [AssessmentController::class, 'editnilaitakelompok'])->name('editnilaitakelompok');  

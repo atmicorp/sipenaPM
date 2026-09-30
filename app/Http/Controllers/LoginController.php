@@ -12,6 +12,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Laravel\Socialite\Facades\Socialite;
+use App\Models\AuditLog;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 class LoginController extends Controller
 {
@@ -34,10 +37,26 @@ class LoginController extends Controller
             $emailDomain = explode("@", $user->email)[1];
 
             if ($emailDomain !== 'student.atmi.ac.id' && $emailDomain !== 'atmi.ac.id') {
+                AuditLog::catat([
+                    'jenis'      => 'keamanan',
+                    'aksi'       => 'login_google_ditolak',
+                    'user_id'    => null,
+                    'user_email' => $user->email,
+                    'deskripsi'  => 'Login Google ditolak: domain tidak diizinkan',
+                    'data_baru'  => ['alasan' => 'domain_salah', 'domain' => $emailDomain],
+                ]);
                 return redirect(route('login'))->withErrors('Email tidak terdaftar.');
             }
 
             if (empty($dataUser)) {
+                AuditLog::catat([
+                    'jenis'      => 'keamanan',
+                    'aksi'       => 'login_google_ditolak',
+                    'user_id'    => null,
+                    'user_email' => $user->email,
+                    'deskripsi'  => 'Login Google ditolak: email tidak terdaftar',
+                    'data_baru'  => ['alasan' => 'email_tidak_terdaftar'],
+                ]);
                 return redirect(route('login'))->withErrors('Email tidak terdaftar.');
             }
             auth()->login($dataUser);
@@ -70,6 +89,85 @@ class LoginController extends Controller
         } catch (\Exception $e) {
             return redirect()->route('login')->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
+    }
+
+        private function manualDiizinkan(Request $request): bool
+    {
+        $ips = config('login.ip_diizinkan', []);
+
+        return empty($ips) || in_array($request->ip(), $ips, true);
+    }
+
+    public function manualIndex(Request $request)
+    {
+        abort_unless($this->manualDiizinkan($request), 404);
+
+        return view('auth.login_manual');
+    }
+
+    public function manualAuthenticate(Request $request)
+    {
+        abort_unless($this->manualDiizinkan($request), 404);
+
+        $credentials = $request->validate([
+            'email'    => 'required|email',
+            'password' => 'required',
+        ]);
+
+        $kunci = 'login-manual|' . Str::lower($credentials['email']) . '|' . $request->ip();
+        $maks  = (int) config('login.maks_percobaan', 5);
+
+        if (RateLimiter::tooManyAttempts($kunci, $maks)) {
+            $detik = RateLimiter::availableIn($kunci);
+
+            AuditLog::catat([
+                'jenis'      => 'keamanan',
+                'aksi'       => 'login_manual_diblokir',
+                'user_id'    => null,
+                'user_email' => $credentials['email'],
+                'deskripsi'  => 'Login manual diblokir: terlalu banyak percobaan',
+            ]);
+
+            return back()
+                ->withErrors(['email' => "Terlalu banyak percobaan. Coba lagi dalam {$detik} detik."])
+                ->onlyInput('email');
+        }
+
+        // Event Failed / Login tetap tercatat oleh subscriber di Tahap 3
+        if (! Auth::attempt($credentials)) {
+            RateLimiter::hit($kunci, 60);
+
+            return back()
+                ->withErrors(['email' => 'Kombinasi email dan password tidak valid.'])
+                ->onlyInput('email');
+        }
+
+        // Password benar, tapi jalur ini khusus Admin
+        if (! Auth::user()->hasRole('Admin')) {
+            $email = Auth::user()->email;
+
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            RateLimiter::hit($kunci, 60);
+
+            AuditLog::catat([
+                'jenis'      => 'keamanan',
+                'aksi'       => 'login_manual_ditolak',
+                'user_id'    => null,
+                'user_email' => $email,
+                'deskripsi'  => 'Login manual ditolak: akun bukan Admin',
+            ]);
+
+            // Pesan sengaja sama, supaya tidak membocorkan bahwa password-nya benar
+            return back()
+                ->withErrors(['email' => 'Kombinasi email dan password tidak valid.'])
+                ->onlyInput('email');
+        }
+
+        RateLimiter::clear($kunci);
+        $request->session()->regenerate();
+        return redirect()->intended(route('dashboard'));
     }
     public function logout()
     {

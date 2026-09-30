@@ -323,8 +323,9 @@
 
         
           <li class="nav-header"><strong>MANAGE DATA USER</strong></li>
-            <li class="nav-item  {{ request()->routeIs('datauser')  ? 'menu-open' : '' }}">
-              <a href="#" class="nav-link {{ request()->routeIs('datauser')  ? 'active' : '' }}">
+              <li class="nav-item  {{ request()->routeIs('datauser', 'logaktivitas')  ? 'menu-open' : '' }}">
+              
+              <a href="#" class="nav-link {{ request()->routeIs('datauser', 'logaktivitas')  ? 'active' : '' }}">
               <i class="nav-icon fas fa-user"></i>
                 <p>
                 Konfigurasi User
@@ -344,6 +345,12 @@
                   <i class="far fa-circle nav-icon"></i>
                   <p>Data User</p>
                   
+                </a>
+              </li>
+                            <li class="nav-item">
+                <a href="{{ route('logaktivitas') }}" class="nav-link {{ request()->routeIs('logaktivitas') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Log Aktivitas</p>
                 </a>
               </li>
             </ul>
