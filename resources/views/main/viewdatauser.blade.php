@@ -152,7 +152,7 @@
                 <td>{{$loop->iteration}}</td>
                 <td>
                     <div class="user-block">
-                      <img src="{{  $user->details->photo ? 'data:image/jpeg;base64,' .  $user->details->photo : asset('images/pp.jpg') }}" class="img-circle elevation-2 mb-2" alt="Default User Image" style="width: 40px; height: 40px;">
+                      <img src="{{ $user->details?->photo ? 'data:image/jpeg;base64,' . $user->details->photo : asset('images/pp.jpg') }}" class="img-circle elevation-2 mb-2" alt="Default User Image" style="width: 40px; height: 40px;">
                           <span class="username"><strong>{{ $user->name }}</strong> </span>
                           @foreach($user->roles as $role)
                               @if($role->name == 'Dosen')
