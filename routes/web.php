@@ -4,7 +4,7 @@ use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MainController;
 use App\Http\Controllers\ManageController;
-use App\Http\Controllers\UserImportController;
+// use App\Http\Controllers\UserImportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\PesertaMagangImportController;

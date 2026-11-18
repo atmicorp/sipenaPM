@@ -68,8 +68,5 @@
   <div class="login-footer">&copy; {{ date('Y') }} Politeknik ATMI Surakarta</div>
 </div>
 
-<script src="{{ asset('js/jquery/jquery.min.js') }}"></script>
-<script src="{{ asset('js/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-<script src="{{ asset('js/adminlte.min.js') }}"></script>
 </body>
 </html>

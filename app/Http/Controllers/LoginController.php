@@ -10,7 +10,7 @@ use App\Models\PesertaTA;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
+// use Illuminate\Validation\ValidationException;
 use Laravel\Socialite\Facades\Socialite;
 use App\Models\AuditLog;
 use Illuminate\Support\Facades\RateLimiter;
@@ -68,28 +68,28 @@ class LoginController extends Controller
     }
 
 
-    public function authenticate(Request $request)
-    {
-        try {
-            $credentials = $request->validate([
-                'email' => 'required|email',
-                'password' => 'required',
-            ]);
-            // dd($credentials);
-            if (Auth::attempt($credentials)) {
-                User::find(Auth::user()->id_user);
-                return redirect()->intended(route('dashboard'));
-            } else {
-                throw ValidationException::withMessages([
-                    'email' => ['Kombinasi email dan password tidak valid.'],
-                ]);
-            }
-        } catch (ValidationException $e) {
-            return redirect()->route('login')->withErrors($e->errors())->withInput();
-        } catch (\Exception $e) {
-            return redirect()->route('login')->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
-        }
-    }
+    // public function authenticate(Request $request)
+    // {
+    //     try {
+    //         $credentials = $request->validate([
+    //             'email' => 'required|email',
+    //             'password' => 'required',
+    //         ]);
+    //         // dd($credentials);
+    //         if (Auth::attempt($credentials)) {
+    //             User::find(Auth::user()->id_user);
+    //             return redirect()->intended(route('dashboard'));
+    //         } else {
+    //             throw ValidationException::withMessages([
+    //                 'email' => ['Kombinasi email dan password tidak valid.'],
+    //             ]);
+    //         }
+    //     } catch (ValidationException $e) {
+    //         return redirect()->route('login')->withErrors($e->errors())->withInput();
+    //     } catch (\Exception $e) {
+    //         return redirect()->route('login')->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+    //     }
+    // }
 
         private function manualDiizinkan(Request $request): bool
     {
