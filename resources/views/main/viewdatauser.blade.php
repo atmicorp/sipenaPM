@@ -156,9 +156,9 @@
                           <span class="username"><strong>{{ $user->name }}</strong> </span>
                           @foreach($user->roles as $role)
                               @if($role->name == 'Dosen')
-                                  <span class="description">NIDN: {{ $user->details->nidn }}</span>
+                                  <span class="description">NIDN: {{ $user->details?->nidn }}</span>
                               @elseif($role->name == 'Mahasiswa')
-                                  <span class="description">NIM: {{ $user->details->nim }}</span>
+                                  <span class="description">NIM: {{ $user->details?->nim }}</span>
                               @endif
                           @endforeach
        
