@@ -92,11 +92,11 @@
         <div class="mt-5">
           <p style="font-size: 20px;">
             Pada hari 
-            <strong>{{ \Carbon\Carbon::parse($datamagang['tanggal'])->translatedFormat('l, d F Y') ?? '-' }}</strong>, 
+            <strong>{{ !empty($datamagang['tanggal']) ? \Carbon\Carbon::parse($datamagang['tanggal'])->translatedFormat('l, d F Y') : '-' }}</strong>, 
             pukul <strong>{{ $datamagang['in'] ?? '-' }} - {{ $datamagang['out'] ?? '-' }}</strong> 
             bertempat di <strong>{{ $datamagang['lokasi'] ?? '-' }}</strong>, 
             dilaksanakan <strong>Presentasi Sidang Magang Program Studi Sarjana Terapan Perancangan Manufaktur</strong> 
-            terhadap mahasiswa tingkat 4 tahun perkuliahan <strong>{{ $datamagang['tahun'] ?? (now()->year - 1).'/'.now()->year }}</strong> 
+            terhadap mahasiswa tingkat 4 tahun perkuliahan <strong>{{ $datamagang['tahun'] ?: '-' }}</strong> 
             dengan SK Pembimbing Magang nomor <strong>{{ $datamagang['sk'] ?? '-' }}</strong> dengan judul:
           </p>
         </div>
@@ -106,7 +106,7 @@
         </div>
 
         <p style="font-size: 20px;">
-          Berdasarkan hasil presentasi magang Program Studi Sarjana Terapan Perancangan Manufaktur terhadap mahasiswa tingkat 4 tahun perkuliahan {{ $datamagang['tahun'] ?? (now()->year - 1).'/'.now()->year }}, menyatakan bahwa laporan hasil magang dengan judul tersebut:
+          Berdasarkan hasil presentasi magang Program Studi Sarjana Terapan Perancangan Manufaktur terhadap mahasiswa tingkat 4 tahun perkuliahan {{ $datamagang['tahun'] ?: '-' }}, menyatakan bahwa laporan hasil magang dengan judul tersebut:
         </p>
 
         <!-- Checklist -->
@@ -145,7 +145,7 @@
         <div class="row mt-3">
           <div class="col-12">
             <p style="font-size: 20px; text-align: right;">
-              Surakarta, {{ \Carbon\Carbon::parse($datamagang['tanggal'])->translatedFormat('d F Y') ?? '-' }}.
+              Surakarta, {{ !empty($datamagang['tanggal']) ? \Carbon\Carbon::parse($datamagang['tanggal'])->translatedFormat('d F Y') : '-' }}.
             </p>
           </div>
         </div>

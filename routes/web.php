@@ -8,6 +8,8 @@ use App\Http\Controllers\ManageController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\PesertaMagangImportController;
+use App\Http\Controllers\LogbookImportController;
+use App\Http\Controllers\TambahPesertaMagangController;
 
 /*
 |--------------------------------------------------------------------------
@@ -118,12 +120,22 @@ Route::prefix('manage')->middleware(['auth', 'audit', 'role:Admin'])->group(func
     Route::post('change-password/{id}', [ManageController::class, 'changePassword'])->name('change.password');
 
 
+        // Tambah Data Peserta Magang: manual (susulan) + akses ke import Excel & Logbook
+    Route::get('tambah-peserta-magang', [TambahPesertaMagangController::class, 'index'])->name('tambahpesertamagang');
+    Route::post('tambah-peserta-magang/manual', [TambahPesertaMagangController::class, 'storeManual'])->name('tambahpesertamagang.manual');
+
         // Import Peserta Magang (data awal per periode magang): upload -> preview -> simpan/batal
     Route::get('import-peserta-magang', [PesertaMagangImportController::class, 'create'])->name('importpesertamagang');
     Route::post('import-peserta-magang/preview', [PesertaMagangImportController::class, 'preview'])->name('importpesertamagang.preview');
     Route::post('import-peserta-magang/simpan', [PesertaMagangImportController::class, 'store'])->name('importpesertamagang.store');
     Route::post('import-peserta-magang/batal', [PesertaMagangImportController::class, 'cancel'])->name('importpesertamagang.cancel');
     Route::get('import-peserta-magang/template', [PesertaMagangImportController::class, 'downloadTemplate'])->name('importpesertamagang.template');
+
+        // Import Mahasiswa Magang dari LOGBOOK: upload -> preview -> simpan/batal
+    Route::get('import-logbook', [LogbookImportController::class, 'create'])->name('importlogbook');
+    Route::post('import-logbook/preview', [LogbookImportController::class, 'preview'])->name('importlogbook.preview');
+    Route::post('import-logbook/simpan', [LogbookImportController::class, 'store'])->name('importlogbook.store');
+    Route::post('import-logbook/batal', [LogbookImportController::class, 'cancel'])->name('importlogbook.cancel');
 
     // manageTA
     Route::get('manage-ta', [ManageController::class, 'manageTA'])->name('manageTA'); //penamaan route  
@@ -166,7 +178,7 @@ Route::prefix('manage')->middleware(['auth', 'audit', 'role:Admin'])->group(func
     Route::get('data-user', [ManageController::class, 'datauser'])->name('datauser'); //penamaan route  
     Route::get('edit-user/{id}', [ManageController::class, 'edituser'])->name('edituser'); //penamaan route  
     Route::post('update-user/{id}', [ManageController::class, 'updateuser'])->name('update.user');
-    Route::post(' uploadphotoeditadmin/{id}', [ManageController::class, 'uploadphotoeditadmin'])->name('uploadphotoeditadmin'); //penamaan route
+    Route::post('uploadphotoeditadmin/{id}', [ManageController::class, 'uploadphotoeditadmin'])->name('uploadphotoeditadmin'); //penamaan route
     // Route::post('/import', [UserImportController::class, 'import'])->name('users.import');
 
     Route::post('tambah-user-manual', [ManageController::class, 'storeusermanual'])->name('storeusermanual');

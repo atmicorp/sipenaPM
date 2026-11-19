@@ -96,15 +96,15 @@
                                     </div>
                                     <div class="form-group">
                                       <label for="tanggal">Tanggal Presentasi</label>
-                                      <input type="date" class="form-control" name="tanggal_presentasi" placeholder="Pilih Tanggal" required value="{{ \Carbon\Carbon::parse($peserta->tanggal_presentasi)->format('Y-m-d') }}">
+                                      <input type="date" class="form-control" name="tanggal_presentasi" placeholder="Pilih Tanggal" value="{{ $peserta->tanggal_presentasi ? \Carbon\Carbon::parse($peserta->tanggal_presentasi)->format('Y-m-d') : '' }}">
                                     </div> 
                                     <div class="form-group">
                                         <label for="jam_presentasi">Jam Presentasi</label>
-                                        <input type="time" class="form-control" name="jam_presentasi" placeholder="Pilih Jam" required value="{{ \Carbon\Carbon::parse($peserta->jam_presentasi)->format('H:i') }}">
+                                        <input type="time" class="form-control" name="jam_presentasi" placeholder="Pilih Jam" value="{{ $peserta->jam_presentasi ? \Carbon\Carbon::parse($peserta->jam_presentasi)->format('H:i') : '' }}">
                                     </div>
                                     <div class="form-group">
                                         <label for="jam_presentasi">Jam Selesai Presentasi</label>
-                                        <input type="time" class="form-control" name="jam_presentasi_selesai" placeholder="Pilih Jam" required value="{{ \Carbon\Carbon::parse($peserta->jam_presentasi_selesai)->format('H:i') }}">
+                                        <input type="time" class="form-control" name="jam_presentasi_selesai" placeholder="Pilih Jam" value="{{ $peserta->jam_presentasi_selesai ? \Carbon\Carbon::parse($peserta->jam_presentasi_selesai)->format('H:i') : '' }}">
                                     </div>
                                     <div class="form-group">
                                         <label for="jam_presentasi">Lokasi Presentasi</label>
@@ -133,9 +133,19 @@
                       <td>{{ $peserta->usermahasiswa->name }}</td>
                       <td>{{ $peserta->usermahasiswa->details->nim }}</td>
                       <td><strong>{{ $peserta->perusahaanmagang->nama }}</strong></td>
-                      <td>{{ \Carbon\Carbon::parse($peserta->tanggal_presentasi)->translatedFormat('d F Y') }}</td>
-                      <td>{{ \Carbon\Carbon::parse($peserta->jam_presentasi)->format('H:i') }} - {{ \Carbon\Carbon::parse($peserta->jam_presentasi_selesai)->format('H:i') }} WIB</td>
-                      <td>{{$peserta->lokasi}}</td>
+                      <td>{{ $peserta->tanggal_presentasi ? \Carbon\Carbon::parse($peserta->tanggal_presentasi)->translatedFormat('d F Y') : '-' }}</td>
+                      <td>
+                        @if($peserta->jam_presentasi)
+                          {{ \Carbon\Carbon::parse($peserta->jam_presentasi)->format('H:i') }}
+                          @if($peserta->jam_presentasi_selesai)
+                            - {{ \Carbon\Carbon::parse($peserta->jam_presentasi_selesai)->format('H:i') }}
+                          @endif
+                          WIB
+                        @else
+                          -
+                        @endif
+                      </td>
+                      <td>{{ $peserta->lokasi ?: '-' }}</td>
                       <td>
                           <!-- Membungkus tombol dalam div dengan kelas flex-column untuk responsivitas -->
                           <div class="btn-group-vertical">

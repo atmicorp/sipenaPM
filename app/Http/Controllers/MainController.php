@@ -288,6 +288,7 @@ class MainController extends Controller
                 ->get();
                 
         //    dd($datamagang);
+        
 
             return view("main.beritaacaramagang", compact('datamagang','pengujimagang'));
 

@@ -28,6 +28,16 @@
   </div>
   @endif
 
+  @if ($errors->any())
+  <div class="alert alert-danger">
+    <ul class="mb-0">
+      @foreach ($errors->all() as $error)
+        <li>{{ $error }}</li>
+      @endforeach
+    </ul>
+  </div>
+  @endif
+
   <!-- Main content -->
   <section class="content">
     <div class="container-fluid">
@@ -124,6 +134,14 @@
               @unless($sudahDinilai)
               <form method="POST" action="{{route('storedatapembimbing')}}" enctype="multipart/form-data">
                 @csrf
+                <input type="hidden" name="mahasiswa" value="{{ $pesertamagang->usermahasiswa->id }}">
+
+                <div class="form-group">
+                  <label for="judul_laporan">Judul Laporan Magang</label>
+                  <textarea class="form-control" id="judul_laporan" name="judul_laporan" rows="2" maxlength="255"
+                            placeholder="Boleh dikosongkan, mahasiswa bisa mengisi sendiri">{{ old('judul_laporan', $pesertamagang->judul_laporan) }}</textarea>
+                </div>
+
                 <div class="form-group">
                   
                   <div class="border p-3 rounded mb-3">
@@ -131,35 +149,33 @@
                     <table class="table table-striped" id="positionsTable">
                       <thead>
                         <tr>
-                          <th>Dosen*</th>
-                          <th>Status*</th>
+                          <th>Dosen</th>
+                          <th>Status</th>
                           <th>Action</th>
                         </tr>
                       </thead>
                       <tbody id="positionsBody">
                     
-                        
                         <tr>
                           <td>
-                            <select name="dosen[]" class="form-control" required>
-                              <option value="" disabled selected>Dosen</option>
+                            <select name="dosen[]" class="form-control">
+                              <option value="" selected>Dosen</option>
                               @foreach ($dosen as $dsn)
                               <option value="{{ $dsn->id }}">
-                              <span>(NIDN : {{ $dsn->details->nidn }})</span> {{$dsn->details->gelar_depan}} {{ $dsn->name }}, {{$dsn->details->gelar_belakang}}
+                                (NIDN : {{ $dsn->details->nidn }}) {{$dsn->details->gelar_depan}} {{ $dsn->name }}, {{$dsn->details->gelar_belakang}}
                               </option>
                               @endforeach
                             </select>
                           </td>
                           <td>
-                            <select name="statusdosen[]" class="form-control" required>
-                              <option value="" disabled selected>Status</option>
+                            <select name="statusdosen[]" class="form-control">
+                              <option value="" selected>Status</option>
                               @foreach ($statusdosen as $stats)
                               <option value="{{ $stats->id }}">
                                 {{ $stats->status_dosen }}
                               </option>
                               @endforeach
                             </select>
-                            <input type="hidden" class="form-control" id="exampleInput" name="mahasiswa" value="{{ $pesertamagang->usermahasiswa->id }}">
                           </td>
                           <td>
                             <button type="button" class="btn btn-danger btn-sm delete-row">
@@ -168,7 +184,6 @@
                           </td>
                         </tr>
                       
-                        
                       </tbody>
                     </table>
                     <div class="d-flex mb-3">
@@ -188,10 +203,6 @@
               </form>
               @endunless
 
-              
-
-
-              
             </div>
           </div>
         </div>
@@ -292,6 +303,7 @@
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.getElementById('customFile');
+    if (!fileInput) { return; }
     fileInput.addEventListener('change', function(event) {
       const fileName = event.target.files[0] ? event.target.files[0].name : 'No file chosen';
       const fileLabel = fileInput.nextElementSibling;
@@ -302,50 +314,55 @@
 
 <script>
   // Menambahkan baris baru saat tombol "Tambah item" diklik
-  document.getElementById('addRow').addEventListener('click', function() {
-    const tbody = document.getElementById('positionsBody');
-    const newRow = document.createElement('tr');
-    newRow.innerHTML = `
-             <td>
-                            <select name="dosen[]" class="form-control" required>
-                              <option value="" disabled selected>Dosen</option>
-                              @foreach ($dosen as $dsn)
-                              <option value="{{ $dsn->id }}">
-                              <span>(NIDN : {{ $dsn->details->nidn }})</span> {{$dsn->details->gelar_depan}} {{ $dsn->name }}, {{$dsn->details->gelar_belakang}}
-                              </option>
-                              @endforeach
-                            </select>
-                          </td>
-                          <td>
-                            <select name="statusdosen[]" class="form-control" required>
-                              <option value="" disabled selected>Status</option>
-                              @foreach ($statusdosen as $stats)
-                              <option value="{{ $stats->id }}">
-                                {{ $stats->status_dosen }}
-                              </option>
-                              @endforeach
-                            </select>
-                            <input type="hidden" class="form-control" id="exampleInput" value="{{ $pesertamagang->usermahasiswa->id }}">
-                          </td>
-                          <td>
-                            <button type="button" class="btn btn-danger btn-sm delete-row">
-                              <i class="fas fa-trash"></i>
-                            </button>
-                          </td>
+  const addRowBtn = document.getElementById('addRow');
+  if (addRowBtn) {
+    addRowBtn.addEventListener('click', function() {
+      const tbody = document.getElementById('positionsBody');
+      const newRow = document.createElement('tr');
+      newRow.innerHTML = `
+        <td>
+          <select name="dosen[]" class="form-control">
+            <option value="" selected>Dosen</option>
+            @foreach ($dosen as $dsn)
+            <option value="{{ $dsn->id }}">
+              (NIDN : {{ $dsn->details->nidn }}) {{$dsn->details->gelar_depan}} {{ $dsn->name }}, {{$dsn->details->gelar_belakang}}
+            </option>
+            @endforeach
+          </select>
+        </td>
+        <td>
+          <select name="statusdosen[]" class="form-control">
+            <option value="" selected>Status</option>
+            @foreach ($statusdosen as $stats)
+            <option value="{{ $stats->id }}">
+              {{ $stats->status_dosen }}
+            </option>
+            @endforeach
+          </select>
+        </td>
+        <td>
+          <button type="button" class="btn btn-danger btn-sm delete-row">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
       `;
 
-    tbody.appendChild(newRow);
-  });
+      tbody.appendChild(newRow);
+    });
+  }
 
   // Menghapus baris saat tombol hapus diklik
-  document.getElementById('positionsBody').addEventListener('click', function(e) {
-    if (e.target && e.target.closest('.delete-row')) {
-      const row = e.target.closest('tr'); // Mencari baris terdekat
-      if (row) {
-        row.remove(); // Menghapus baris
+  const positionsBody = document.getElementById('positionsBody');
+  if (positionsBody) {
+    positionsBody.addEventListener('click', function(e) {
+      if (e.target && e.target.closest('.delete-row')) {
+        const row = e.target.closest('tr'); // Mencari baris terdekat
+        if (row) {
+          row.remove(); // Menghapus baris
+        }
       }
-    }
-  });
+    });
+  }
 </script>
 
 @endsection

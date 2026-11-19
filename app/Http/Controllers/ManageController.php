@@ -626,14 +626,21 @@ class ManageController extends Controller
             if (!$user) {
                 abort(403, 'Profil Tidak Ditemukan');
             }
-            $datauser = User::where('id', $id)->first();
-            // dd($datauser);
+
+            $datauser = User::where('id', $id)->firstOrFail();
+
+            // Akun tanpa baris user_details (misalnya Admin) dibuatkan objek kosong
+            // di memori saja, supaya view tidak error. Tidak disimpan ke database;
+            // barisnya baru dibuat saat admin menekan "Save and Change".
+            if (!$datauser->details) {
+                $datauser->setRelation('details', new UserDetail());
+            }
+
             return view("main.viewdetailuser", compact('datauser'));
         }
         catch (\Exception $e) {
             return redirect()->back()->with('error', 'Data tidak ditemukan');
         }
-       
     }
 
     public function updateuser(Request $request, $id)
@@ -852,42 +859,69 @@ class ManageController extends Controller
     {
         try {
             $validatedData = $request->validate([
-                'dosen' => 'required|array',
-                'statusdosen' => 'required|array',
+                'dosen' => 'nullable|array',
+                'dosen.*' => 'nullable|integer',
+                'statusdosen' => 'nullable|array',
+                'statusdosen.*' => 'nullable|integer',
                 'mahasiswa' => 'required|integer',
+                'judul_laporan' => 'nullable|string|max:255',
+            ], [
+                'judul_laporan.max' => 'Judul laporan maksimal 255 karakter.',
             ]);
 
-            // Guard: kalau mahasiswa ini sudah dinilai, tidak boleh ada perubahan pembimbing/penguji lagi.
-            $sudahDinilai = PenilaianMagang::where('id_mahasiswa', $validatedData['mahasiswa'])->exists();
-            if ($sudahDinilai) {
-                return redirect()->back()->with('error', 'Tidak bisa menambah dosen, penilaian magang untuk mahasiswa ini sudah dilakukan.');
-            }
+            $idMhs = (int) $validatedData['mahasiswa'];
 
-            if (count($validatedData['dosen']) !== count(array_unique($validatedData['dosen']))) {
-                return redirect()->back()->with('error', 'Duplikasi Nama Dosen, Silahkan Ulangi !');
-            }
-
-            foreach ($validatedData['dosen'] as $key => $dosenId) {
-
-                $existingPeserta = DataPengujiMagang::where('id_dosen', $dosenId) ->where('id_mahasiswa', $request->mahasiswa)
-                ->exists();
-                if ($existingPeserta) {
-                    return redirect()->back()->with('error', 'Data Dosen Sudah Terdaftar');
+            // Pasangkan dosen + status, buang baris yang kosong
+            $baris = [];
+            foreach (($validatedData['dosen'] ?? []) as $key => $dosenId) {
+                if (empty($dosenId)) {
+                    continue;
                 }
-                DataPengujiMagang::create([
-                    'id_dosen' => (int)$dosenId,
-                    'status_dosen' => (int)$validatedData['statusdosen'][$key],
-                    'id_mahasiswa' => (int)$validatedData['mahasiswa'],
-                ]);
+                $status = $validatedData['statusdosen'][$key] ?? null;
+                if (empty($status)) {
+                    return redirect()->back()->withInput()->with('error', 'Status dosen wajib dipilih untuk setiap dosen.');
+                }
+                $baris[] = ['dosen' => (int) $dosenId, 'status' => (int) $status];
             }
-            return redirect()->back()->with('success', 'Data Berhasil Ditambahkan');
-        
-        }
-        catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Data Gagal Ditambahkan'  . $e->getMessage());
+
+            if (!empty($baris)) {
+                if (PenilaianMagang::where('id_mahasiswa', $idMhs)->exists()) {
+                    return redirect()->back()->withInput()->with('error', 'Tidak bisa menambah dosen, penilaian magang untuk mahasiswa ini sudah dilakukan.');
+                }
+
+                $ids = array_column($baris, 'dosen');
+                if (count($ids) !== count(array_unique($ids))) {
+                    return redirect()->back()->withInput()->with('error', 'Duplikasi Nama Dosen, Silahkan Ulangi !');
+                }
+
+                $sudahAda = DataPengujiMagang::where('id_mahasiswa', $idMhs)->whereIn('id_dosen', $ids)->exists();
+                if ($sudahAda) {
+                    return redirect()->back()->withInput()->with('error', 'Data Dosen Sudah Terdaftar');
+                }
+            }
+
+            DB::transaction(function () use ($request, $validatedData, $idMhs, $baris) {
+                // Judul laporan (hanya jika field-nya dikirim)
+                if ($request->has('judul_laporan')) {
+                    PesertaMagang::where('id_mahasiswa', $idMhs)
+                        ->update(['judul_laporan' => $validatedData['judul_laporan'] ?: null]);
+                }
+
+                foreach ($baris as $b) {
+                    DataPengujiMagang::create([
+                        'id_dosen' => $b['dosen'],
+                        'status_dosen' => $b['status'],
+                        'id_mahasiswa' => $idMhs,
+                    ]);
+                }
+            });
+
+            return redirect()->back()->with('success', 'Data Berhasil Disimpan');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Data Gagal Disimpan: ' . $e->getMessage());
         }
     }
- 
+    
     // Penilaian ta------------------------------------------------
     public function storeaspekdatata(Request $request)
     {

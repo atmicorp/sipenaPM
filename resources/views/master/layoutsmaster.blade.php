@@ -206,8 +206,8 @@
 
           @role('Admin')
             <li class="nav-header"><strong>MANAGE MAGANG</strong></li>
-            <li class="nav-item  {{ request()->routeIs('penempatanmagang') || request()->routeIs('viewpenempatanmagang') || request()->routeIs('setupdatamagang') || request()->routeIs('aspekpenilaian')  || request()->routeIs('resetpenilaianmagang') || request()->routeIs('hasilpenilaianmagang') || request()->routeIs('importpesertamagang*')? 'menu-open' : '' }} ">
-              <a href="#" class="nav-link {{ request()->routeIs('penempatanmagang') || request()->routeIs('viewpenempatanmagang') || request()->routeIs('setupdatamagang') ||request()->routeIs('aspekpenilaian') ||request()->routeIs('hasilpenilaianmagang') || request()->routeIs('resetpenilaianmagang') || request()->routeIs('importpesertamagang*') ? 'active' : '' }}">
+            <li class="nav-item  {{ request()->routeIs('penempatanmagang') || request()->routeIs('viewpenempatanmagang') || request()->routeIs('setupdatamagang') || request()->routeIs('aspekpenilaian')  || request()->routeIs('resetpenilaianmagang') || request()->routeIs('hasilpenilaianmagang') || request()->routeIs('tambahpesertamagang*') || request()->routeIs('importpesertamagang*') || request()->routeIs('importlogbook*') ? 'menu-open' : '' }} ">
+              <a href="#" class="nav-link {{ request()->routeIs('penempatanmagang') || request()->routeIs('viewpenempatanmagang') || request()->routeIs('setupdatamagang') ||request()->routeIs('aspekpenilaian') ||request()->routeIs('hasilpenilaianmagang') || request()->routeIs('resetpenilaianmagang') || request()->routeIs('tambahpesertamagang*') || request()->routeIs('importpesertamagang*') || request()->routeIs('importlogbook*') ? 'active' : '' }}">
               <i class="nav-icon fas fa-network-wired"></i>
                 <p>
                 Konfigurasi Magang
@@ -217,9 +217,9 @@
               </a>
             <ul class="nav nav-treeview">
               <li class="nav-item">
-                <a href="{{ route('importpesertamagang') }}" class="nav-link {{ request()->routeIs('importpesertamagang*') ? 'active' : '' }}">
+                <a href="{{ route('tambahpesertamagang') }}" class="nav-link {{ request()->routeIs('tambahpesertamagang*') || request()->routeIs('importpesertamagang*') || request()->routeIs('importlogbook*') ? 'active' : '' }}">
                   <i class="far fa-circle nav-icon"></i>
-                  <p>Import Peserta Magang</p>
+                  <p>Tambah Data Peserta Magang</p>
                 </a>
               </li>
               <li class="nav-item">
