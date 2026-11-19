@@ -50,7 +50,7 @@ class User extends Authenticatable
 
     public function details()
     {
-        return $this->hasOne(UserDetail::class, 'user_id'); 
+        return $this->hasOne(UserDetail::class, 'user_id')->withDefault();
         //user_id pada tabel user_details adalah foreign key yang merujuk ke kolom id pada tabel users
     }
 

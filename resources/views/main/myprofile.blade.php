@@ -38,6 +38,10 @@
 @endsection
 
 @section('content')
+@php
+    // Akun tanpa baris user_details (misalnya Admin) -> $details bernilai null
+    $details = $user->details;
+@endphp
  <!-- Content Wrapper. Contains page content -->
  <div class="content-wrapper">
   <!-- Content Header (Page header) -->
@@ -99,9 +103,9 @@
             <div class="card-body box-profile">
               <div class="text-center">    
                 <div class="text-center position-relative">
-                  @if($user->details->photo)
+                  @if($details?->photo)
                       <img class="profile-user-img img-fluid img-circle"
-                           src="data:image/jpeg;base64,{{ $user->details->photo }}"
+                           src="data:image/jpeg;base64,{{ $details->photo }}"
                            alt="User profile picture">
                   @else
                       <img class="profile-user-img img-fluid img-circle"
@@ -113,11 +117,11 @@
                 <a href="#" data-toggle="modal" data-target="#changeImageModal">Edit (maksimal 1MB)</a>
               </div>
               </div>
-              <h3 class="profile-username text-center">{{ $user->details->gelar_depan }} {{ $user->name }}@if($user->details->gelar_belakang), {{ $user->details->gelar_belakang }}@endif</h3>
+              <h3 class="profile-username text-center">{{ $details?->gelar_depan }} {{ $user->name }}@if($details?->gelar_belakang), {{ $details->gelar_belakang }}@endif</h3>
               <hr>
               <strong>Jabatan :</strong>
               <br>
-              {{$user->details->jabatan}}
+              {{ $details?->jabatan ?? '-' }}
             </div>    
           </div>      
         </div>
@@ -151,13 +155,13 @@
                     <div class="form-group row">
                       <label for="inputSkills" class="col-sm-2 col-form-label">NIK</label>
                       <div class="col-sm-10">
-                        <input type="text" class="form-control" id="nik"  name="nik"  value="{{ $user->details->nik }}" readonly>
+                        <input type="text" class="form-control" id="nik"  name="nik"  value="{{ $details?->nik }}" readonly>
                       </div>
                     </div>
                     <div class="form-group row">
                       <label for="inputSkills" class="col-sm-2 col-form-label">NIDN/NUP</label>
                       <div class="col-sm-10">
-                        <input type="text" class="form-control" id="nidn" name="nidn" value="{{ $user->details->nidn }}" readonly>
+                        <input type="text" class="form-control" id="nidn" name="nidn" value="{{ $details?->nidn }}" readonly>
                       </div>
                     </div>
                    
@@ -190,7 +194,7 @@ document.getElementById('profileImage').addEventListener('change', function(e) {
     var image = document.getElementById('imagePreview');
 
     // Ensure it's an image file
-    if (file.type.match('image.*')) {
+    if (file && file.type.match('image.*')) {
         var reader = new FileReader();
 
         reader.onload = function(e) {
@@ -222,6 +226,10 @@ document.getElementById('profileImage').addEventListener('change', function(e) {
 // Handle form submission
 document.getElementById('cropForm').addEventListener('submit', function(e) {
     e.preventDefault();
+
+    if (!cropper) {
+        return;
+    }
 
     // Get cropped data
     var croppedData = cropper.getData();

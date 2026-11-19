@@ -48,40 +48,12 @@
 
     <!-- Right navbar links -->
     <ul class="navbar-nav ml-auto">
-      <!-- Notifications Dropdown Menu -->
-      <!-- <li class="nav-item dropdown">
-        <a class="nav-link" data-toggle="dropdown" href="#">
-          <i class="far fa-bell"></i>
-          <span class="badge badge-warning navbar-badge">15</span>
-        </a>
-        <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-          <span class="dropdown-item dropdown-header">15 Notifications</span>
-          <div class="dropdown-divider"></div>
-          <a href="#" class="dropdown-item">
-            <i class="fas fa-envelope mr-2"></i> 4 new messages
-            <span class="float-right text-muted text-sm">3 mins</span>
-          </a>
-          <div class="dropdown-divider"></div>
-          <a href="#" class="dropdown-item">
-            <i class="fas fa-users mr-2"></i> 8 friend requests
-            <span class="float-right text-muted text-sm">12 hours</span>
-          </a>
-          <div class="dropdown-divider"></div>
-          <a href="#" class="dropdown-item">
-            <i class="fas fa-file mr-2"></i> 3 new reports
-            <span class="float-right text-muted text-sm">2 days</span>
-          </a>
-          <div class="dropdown-divider"></div>
-          <a href="#" class="dropdown-item dropdown-footer">See All Notifications</a>
-        </div>
-      </li> -->
-      
       <!-- Profile Button -->
         <li class="nav-item dropdown">
           <a class="nav-link d-flex align-items-center" data-toggle="dropdown" href="#">
             
             <!-- operator ternary (?:) untuk memilih antara foto yang ada dan foto default. -->
-            <img src="{{ Auth::user()->details->photo ? 'data:image/jpeg;base64,' . Auth::user()->details->photo : asset('images/pp.jpg') }}" class="img-circle elevation-2 mb-2" alt="Default User Image" style="width: 30px; height: 30px;">
+            <img src="{{ Auth::user()->details?->photo ? 'data:image/jpeg;base64,' . Auth::user()->details->photo : asset('images/pp.jpg') }}" class="img-circle elevation-2 mb-2" alt="Default User Image" style="width: 30px; height: 30px;">
           
             <p class="mb-0">
               <i class="fas fa-caret-down ml-2"></i>
@@ -90,7 +62,7 @@
           <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
             <div class="text-center p-3" style="background-color: #d9f3fa">
             <!-- operator ternary (?:) untuk memilih antara foto yang ada dan foto default. -->
-            <img src="{{ Auth::user()->details->photo ? 'data:image/jpeg;base64,' . Auth::user()->details->photo : asset('images/pp.jpg') }}" class="img-circle elevation-2 mb-2" alt="Default User Image" style="width: 60px; height: 60px;">
+            <img src="{{ Auth::user()->details?->photo ? 'data:image/jpeg;base64,' . Auth::user()->details->photo : asset('images/pp.jpg') }}" class="img-circle elevation-2 mb-2" alt="Default User Image" style="width: 60px; height: 60px;">
               <p class="mb-0">
                 {{ Auth::user()->name }}
               </p>
@@ -123,7 +95,7 @@
       <!-- Sidebar user panel (optional) -->
       <div class="user-panel mt-2  mb-2 d-flex">
         <div class="info">
-        <h5><strong>{{ strtoupper(Auth::user()->roles->first()->name) }}</strong></h5>
+        <h5><strong>{{ strtoupper(Auth::user()->roles->first()?->name ?? '') }}</strong></h5>
         </div>
       </div>
      
@@ -334,12 +306,6 @@
                 </p>
               </a>
             <ul class="nav nav-treeview">
-              <!-- <li class="nav-item">
-              <a href="" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Tambah Data</p>
-                </a>
-              </li> -->
               <li class="nav-item">
                 <a href="{{route('datauser')}}" class="nav-link {{ request()->routeIs('datauser') ? 'active' : '' }}">
                   <i class="far fa-circle nav-icon"></i>
